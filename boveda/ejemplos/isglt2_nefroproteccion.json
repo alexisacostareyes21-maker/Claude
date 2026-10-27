@@ -104,6 +104,7 @@
       "n_elicitaciones": 5,
       "n_encuadres": 5,
       "cuota_consenso": 0.8,
+      "tasa_abstencion": 0.0,
       "anclas_verificadas": 2,
       "ancla_mas_fuerte": "registro_ensayo",
       "motivos": [
