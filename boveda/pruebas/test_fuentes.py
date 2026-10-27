@@ -193,10 +193,67 @@ def test_pendientes_no_se_esconden():
 
 
 def test_fuente_por_tipo_de_ancla():
+    from harness.fuentes import fuentes_de_ancla
     ok(fuente_de_ancla(TipoAncla.REGISTRO_ENSAYO).clave == "clinicaltrials", "ensayo")
     ok(fuente_de_ancla(TipoAncla.ETIQUETA_REGULADOR).clave == "openfda", "etiqueta")
-    ok(fuente_de_ancla(TipoAncla.GUIA_GOBIERNO).clave == "vadod", "guia de gobierno")
     ok(fuente_de_ancla(TipoAncla.SIN_ANCLA) is None, "sin ancla no tiene fuente")
+
+
+def test_fuente_de_ancla_nunca_devuelve_la_inusable():
+    """Varias fuentes comparten tipo de ancla, y en los dos casos donde eso pasa
+    la primera en orden alfabetico es justo la INUSABLE: el USPSTF antes de
+    VA/DoD, y el Catalogo Maestro antes de la NOM. Un ayudante que devuelve la
+    fuente prohibida cuando le piden la fuente de un tipo es peor que no tenerlo."""
+    from harness.fuentes import fuentes_de_ancla
+    gob = fuentes_de_ancla(TipoAncla.GUIA_GOBIERNO)
+    ok(len(gob) >= 2, f"varias fuentes comparten este tipo: {[f.clave for f in gob]}")
+    elegida = fuente_de_ancla(TipoAncla.GUIA_GOBIERNO)
+    ok(elegida is not None and elegida.permite_comercial and elegida.permite_ia,
+       f"debe elegir una usable: {elegida.clave if elegida else None}")
+    ok(elegida.clave != "uspstf",
+       "el USPSTF NO es dominio publico y no puede ser la fuente elegida")
+
+    mex = fuentes_de_ancla(TipoAncla.NORMA_OFICIAL)
+    ok(len(mex) >= 2, f"NOM y Catalogo Maestro: {[f.clave for f in mex]}")
+    em = fuente_de_ancla(TipoAncla.NORMA_OFICIAL)
+    ok(em is not None and em.clave == "mexico_nom",
+       f"debe elegir la NOM, no el Catalogo Maestro cuya existencia es incierta: "
+       f"{em.clave if em else None}")
+
+
+def test_uspstf_corregido_a_no_usable():
+    """Correccion de un error previo de este proyecto: el USPSTF se habia
+    clasificado como dominio publico y NO lo es. AHRQ da un permiso condicionado
+    a que la obra quede INALTERADA, lo que es incompatible con derivar."""
+    u = CATALOGO["uspstf"]
+    ok(not u.permite_comercial, "el USPSTF no permite uso comercial")
+    ok(not u.permite_ia, "ni ingestion por IA")
+    ok("CORRECCION" in u.base_legal, "el catalogo debe dejar constancia de la correccion")
+    ok("INALTERADA" in u.base_legal,
+       "y de la razon: la exigencia de obra inalterada es incompatible con derivar")
+
+
+def test_cenetec_riesgo_de_existencia():
+    """El hallazgo que mas afecta la planeacion de la capa mexicana."""
+    c = CATALOGO["mexico_cenetec"]
+    ok("EXISTENCIA" in c.acceso,
+       "no es un problema de licencia sino de que el Catalogo Maestro puede no existir")
+    ok(any("espejo" in c.riesgo_terceros for _ in [1]) or "Studocu" in c.riesgo_terceros,
+       "debe advertir que tomarlas de un espejo es peor que no tomarlas")
+    ok(any("DGMoSS" in p for p in c.pendiente_verificar),
+       f"debe quedar como la verificacion pendiente de mayor valor: {c.pendiente_verificar}")
+
+
+def test_articulo_14_corta_en_dos_sentidos():
+    """La segunda mitad del articulo 14 fraccion VIII protege las
+    interpretaciones y los estudios comparativos. Eso es a la vez un riesgo (una
+    GPC puede ser una interpretacion) y un activo (la capa comparativa de ORIONS
+    es obra propia protegida)."""
+    n = CATALOGO["mexico_nom"]
+    ok("14 fraccion VIII" in n.base_legal, "debe citar el articulo")
+    ok("estudios comparativos" in n.base_legal, "y la segunda mitad de la fraccion")
+    ok("obra PROPIA" in n.base_legal or "propia" in n.base_legal,
+       "debe registrar que la capa comparativa de ORIONS queda protegida como suya")
 
 
 # ------------------------------------------- contra datos reales del bucket

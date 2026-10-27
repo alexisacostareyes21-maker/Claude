@@ -278,6 +278,152 @@ CATALOGO: dict[str, Fuente] = {
             "el bucket, y con que latencia: de eso depende el periodo del re-chequeo",
         ],
     ),
+    "uspstf": Fuente(
+        clave="uspstf",
+        nombre="US Preventive Services Task Force (y su API ePSS)",
+        tipo_ancla=TipoAncla.GUIA_GOBIERNO,
+        base_legal=(
+            "CORRECCION DE UN ERROR PREVIO DE ESTE PROYECTO: el USPSTF NO es dominio "
+            "publico. No lo declara. AHRQ otorga un permiso CONDICIONADO que permite "
+            "reproducir, redistribuir, mostrar publicamente e incorporar la obra en otros "
+            "materiales, pero con la condicion de que quede INALTERADA, exige descargo "
+            "para adaptaciones, exige citar el sitio del USPSTF, y contiene clausula "
+            "anticomercial explicita. La exigencia de 'inalterada' es incompatible con la "
+            "tesis de ORIONS, que es derivar: un hecho atomico extraido es una alteracion"
+        ),
+        permite_comercial=False, permite_ia=False, share_alike=False,
+        acceso="API ePSS y datos estructurados de recomendaciones con sus grados",
+        obligaciones_continuas=[
+            "si algun dia se licencia: mantener la obra inalterada y citar el sitio, lo "
+            "que en la practica impide el uso que ORIONS necesita",
+        ],
+        riesgo_terceros="",
+        huecos=["la pieza mas valiosa del bloque de EEUU (recomendaciones preventivas con "
+                "grado, en JSON, con API) resulta ser la mas restringida, y las dos unicas "
+                "clausulas anticomerciales del bloque vienen de AHRQ, que es justo la "
+                "agencia que sostiene al USPSTF"],
+        confianza_dictamen="media",
+        pendiente_verificar=["el texto literal completo del aviso de derechos de AHRQ, "
+                             "para precisar el alcance exacto de la clausula anticomercial"],
+    ),
+    "cdc_mmwr": Fuente(
+        clave="cdc_mmwr",
+        nombre="CDC: MMWR y la especificacion CDSi del calendario ACIP",
+        tipo_ancla=TipoAncla.GUIA_GOBIERNO,
+        base_legal=("dominio publico, y es el mas limpio y mejor documentado de todo el "
+                    "bloque de EEUU: el MMWR lleva compromiso de dominio publico firmado "
+                    "por los autores"),
+        permite_comercial=True, permite_ia=True, share_alike=False,
+        acceso=("MMWR por web y por los datos de data.cdc.gov con Socrata. Y la pieza mas "
+                "valiosa: CDC CDSi, Clinical Decision Support for Immunization, es el "
+                "UNICO lugar donde el calendario ACIP existe como LOGICA EJECUTABLE y no "
+                "como PDF (Logic Specification for ACIP Recommendations, v4.6, 151 pags)"),
+        obligaciones_continuas=["no implicar respaldo del CDC"],
+        riesgo_terceros="",
+        huecos=["el calendario mexicano difiere del de ACIP, asi que el CDSi sirve como "
+                "MOTOR de reglas (edad minima absoluta, intervalo minimo, numero de dosis) "
+                "y no como contenido"],
+        confianza_dictamen="media",
+    ),
+    "mexico_nom": Fuente(
+        clave="mexico_nom",
+        nombre="Normas Oficiales Mexicanas de salud, via el DOF",
+        tipo_ancla=TipoAncla.NORMA_OFICIAL,
+        base_legal=(
+            "Ley Federal del Derecho de Autor, articulo 14 fraccion VIII, texto literal: "
+            "no son objeto de proteccion 'los textos legislativos, reglamentarios, "
+            "administrativos o judiciales, asi como sus traducciones oficiales. En caso de "
+            "ser publicados, deberan apegarse al texto oficial y no conferiran derecho "
+            "exclusivo de edicion'. Una NOM es un texto reglamentario y cae de lleno aqui. "
+            "PERO la misma fraccion continua: 'Sin embargo, seran objeto de proteccion las "
+            "concordancias, interpretaciones, estudios comparativos, anotaciones, "
+            "comentarios y demas trabajos similares'. Esa segunda mitad corta en los dos "
+            "sentidos: una Guia de Practica Clinica puede ser una interpretacion y no un "
+            "texto administrativo puro, y por tanto estar protegida; y la capa comparativa "
+            "de ORIONS, el delta Mexico y la discordancia entre paneles, queda protegida "
+            "como obra PROPIA. Es el unico articulo del expediente que da un activo, no "
+            "solo un permiso"
+        ),
+        permite_comercial=True, permite_ia=True, share_alike=False,
+        acceso=("DOF por nota, con patron de URL por codigo y fecha. El activo tecnico es "
+                "el PDF con firma electronica avanzada, disponible solo desde julio de "
+                "2012. No se verifico que exista API"),
+        obligaciones_continuas=[
+            "apegarse al texto oficial: la exencion del articulo 14 es para el texto tal "
+            "cual, no para una version editada que se presente como la norma",
+            "seguir la vigencia en el DOF: una NOM derogada que siga viva en la Boveda es "
+            "exposicion por informacion sanitaria erronea",
+        ],
+        riesgo_terceros="",
+        huecos=["es la unica fuente que da el criterio OBLIGATORIO en Mexico y no el "
+                "recomendado en otro pais. El ENARM se califica contra la norma mexicana y "
+                "el Catalogo Maestro, no contra la ESC ni la ADA: una Boveda construida "
+                "solo con evidencia primaria internacional reconstruye la ciencia y falla "
+                "el examen"],
+        confianza_dictamen="media",
+    ),
+    "mexico_cenetec": Fuente(
+        clave="mexico_cenetec",
+        nombre="Guias de Practica Clinica del Catalogo Maestro (CENETEC, hoy DGMoSS)",
+        tipo_ancla=TipoAncla.NORMA_OFICIAL,
+        base_legal=("incierta. Podria ampararse en el articulo 14 fraccion VIII como texto "
+                    "administrativo, o quedar protegida por la segunda mitad de esa misma "
+                    "fraccion como interpretacion o estudio comparativo. No se encontro "
+                    "aviso de uso"),
+        permite_comercial=False, permite_ia=False, share_alike=False,
+        acceso=("INCIERTO Y URGENTE: CENETEC dejo de existir con ese nombre y es ahora la "
+                "Direccion General de Modernizacion del Sector Salud. Notas de prensa de "
+                "2025 afirman que el acceso a su sitio y al Catalogo Maestro fue "
+                "SUSPENDIDO. Es prensa, no boletin oficial, y no se confirmo con fuente "
+                "primaria. Si es cierto, ORIONS no tiene un problema de licencia con el "
+                "Catalogo Maestro: tiene un problema de EXISTENCIA"),
+        obligaciones_continuas=[],
+        riesgo_terceros=("alto por otra via: las GPC completas estan en ResearchGate, "
+                         "Studocu y sitios de ENARM. Tomarlas de ahi es PEOR que no "
+                         "tomarlas, porque son copias sin cadena de custodia y el acto de "
+                         "descargarlas de un espejo no autorizado agrega su propia falta"),
+        huecos=["sin el Catalogo Maestro, el criterio mexicano de practica clinica no tiene "
+                "fuente estructurada, y es justo lo que el ENARM evalua"],
+        confianza_dictamen="baja",
+        pendiente_verificar=[
+            "si el Catalogo Maestro sigue publicamente accesible tras el cambio a DGMoSS: "
+            "es la verificacion de mayor valor pendiente en todo el expediente, porque de "
+            "ella depende la viabilidad de la capa mexicana",
+            "pedir por escrito el permiso de uso educativo a la DGMoSS: es gratis "
+            "intentarlo y un si cambia el calculo",
+        ],
+    ),
+    "terminologias": Fuente(
+        clave="terminologias",
+        nombre="Terminologias, ontologias y grafos biomedicos (UMLS, SNOMED, LOINC, etc)",
+        tipo_ancla=TipoAncla.DERIVADA,
+        base_legal="NO VERIFICADO. No se obtuvo ni una linea literal de licencia",
+        permite_comercial=False, permite_ia=False, share_alike=False,
+        acceso=("NO VERIFICADO: egress bloqueado a snomed.org, loinc.org, nlm.nih.gov, "
+                "reactome.org, genome.jp y otros"),
+        obligaciones_continuas=[],
+        riesgo_terceros=(
+            "LA TRAMPA ESTRUCTURAL, el mismo patron que PMC: en terminologias biomedicas "
+            "el permiso casi nunca es del agregado sino de CADA COMPONENTE. Los cuatro "
+            "grafos que un equipo con prisa descargaria primero (UMLS, Open Targets, "
+            "PrimeKG, Hetionet) son precisamente los cuatro donde la licencia de la "
+            "envoltura NO describe la licencia del contenido. En UMLS cada vocabulario "
+            "fuente tiene su propia categoria de restriccion y el acuerdo remite al titular"
+        ),
+        huecos=["si se confirma que Mexico no es miembro de SNOMED International (los "
+                "miembros latinoamericanos serian Argentina, Chile y Uruguay), SNOMED CT "
+                "es inviable para una empresa mexicana con presupuesto cero"],
+        confianza_dictamen="baja",
+        pendiente_verificar=[
+            "TODO. Este dictamen es NO_VERIFICADO por imposibilidad tecnica, no por "
+            "ambiguedad de las fuentes, y hasta que se verifique ninguna de estas fuentes "
+            "entra a la Boveda",
+            "la membresia de Mexico en SNOMED International",
+            "si StatPearls lleva clausula NonCommercial y NoDerivatives: si se confirma es "
+            "doblemente inusable, porque el no comercial mata el producto y el sin "
+            "derivados mata la derivacion",
+        ],
+    ),
     "vadod": Fuente(
         clave="vadod",
         nombre="Guias de practica clinica VA/DoD",
@@ -323,11 +469,27 @@ CATALOGO: dict[str, Fuente] = {
 }
 
 
+def fuentes_de_ancla(tipo: TipoAncla) -> list[Fuente]:
+    """Todas las fuentes que pueden sostener ese tipo de ancla."""
+    return [f for f in CATALOGO.values() if f.tipo_ancla is tipo]
+
+
 def fuente_de_ancla(tipo: TipoAncla) -> Optional[Fuente]:
-    for f in CATALOGO.values():
-        if f.tipo_ancla is tipo:
-            return f
-    return None
+    """La fuente USABLE para ese tipo de ancla, o None si no hay ninguna.
+
+    Devolver "la primera del catalogo" era un error latente: varias fuentes
+    comparten tipo de ancla (el USPSTF y VA/DoD son las dos guias de gobierno; la
+    NOM y el Catalogo Maestro son las dos normativa mexicana) y en los dos casos
+    la primera en orden alfabetico resulta ser la INUSABLE. Un ayudante que
+    devuelve la fuente prohibida cuando le piden la fuente de un tipo es peor que
+    no tener el ayudante.
+    """
+    usables = [f for f in fuentes_de_ancla(tipo) if f.permite_comercial and f.permite_ia]
+    if not usables:
+        return None
+    # a igual usabilidad, la de dictamen mas confiable
+    orden = {"alta": 0, "media": 1, "baja": 2}
+    return min(usables, key=lambda f: orden.get(f.confianza_dictamen, 3))
 
 
 def obligaciones_pendientes() -> list[str]:
@@ -365,6 +527,7 @@ def pendientes_de_verificar() -> list[str]:
 __all__ = [
     "admisible_pmc", "Dictamen", "MotivoRechazo", "Fuente", "CATALOGO",
     "PERMITIDAS", "LICENCIAS_VERIFICADAS", "COMERCIAL_PERO_INSERVIBLE", "NO_COMERCIAL",
-    "fuente_de_ancla", "obligaciones_pendientes", "huecos_de_cobertura",
+    "fuente_de_ancla", "fuentes_de_ancla", "obligaciones_pendientes",
+    "huecos_de_cobertura",
     "pendientes_de_verificar",
 ]
