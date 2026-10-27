@@ -224,6 +224,7 @@ def anclar_en_ensayo(nct_id: str, magnitud: Magnitud, fetcher: Fetcher,
 
     clave_des = (desenlace or "").lower().strip()
     candidatos: list[dict] = []
+    halladas: list[Magnitud] = []   # lo que la fuente SI dice, para contrastar
 
     for i, m in enumerate(medidas):
         titulo = (m.get("title") or "")
@@ -238,6 +239,8 @@ def anclar_en_ensayo(nct_id: str, magnitud: Magnitud, fetcher: Fetcher,
                     f".analyses[{j}]")
             candidatos.append({"ruta": ruta, "titulo": titulo,
                                "magnitud": str(cand), "param": an.get("paramType")})
+            if cand.clase is magnitud.clase:
+                halladas.append(cand)
             ac = comparar(cand, magnitud, tol)
             if ac in (Acuerdo.IDENTICO, Acuerdo.EQUIVALENTE, Acuerdo.COMPATIBLE):
                 a = _ancla_ensayo(nct_id, cand, True)
@@ -247,11 +250,37 @@ def anclar_en_ensayo(nct_id: str, magnitud: Magnitud, fetcher: Fetcher,
                                         encontrado=cand, candidatos=candidatos,
                                         motivo=f"coincide ({ac.value}) en {ruta}")
 
+    # Si la fuente SI trae una magnitud de la misma clase y no coincide, el ancla
+    # queda VERIFICADA con el valor de la fuente, no con el afirmado. Lo que se
+    # verifico es lo que dice el registro; que la afirmacion lo contradiga es un
+    # hallazgo distinto, y es la atestiguacion la que lo convierte en NEGRO. Sin
+    # esto, una cifra que contradice su propia fuente se degradaria a un simple
+    # "sin ancla" y se mostraria como no anclada en vez de bloquearse.
+    if halladas:
+        from .numeros import agrupar as _agrupar
+        grupos = _agrupar(halladas)
+        if len(grupos) > 1:
+            return ResultadoAnclaje(
+                ancla=_ancla_ensayo(nct_id, magnitud, False), coincide=None,
+                candidatos=candidatos,
+                motivo=(f"el registro trae {len(grupos)} medidas de clase "
+                        f"{magnitud.clase.value} que no concuerdan entre si: hace falta "
+                        f"precisar el desenlace antes de concluir"),
+            )
+        a = _ancla_ensayo(nct_id, halladas[0], True)
+        a.fecha_consulta = _ultima_actualizacion(doc)
+        return ResultadoAnclaje(
+            ancla=a, coincide=Acuerdo.DISCREPANTE, candidatos=candidatos,
+            encontrado=halladas[0],
+            motivo=(f"el registro dice {halladas[0]} y la afirmacion dice {magnitud}: "
+                    f"el ancla se verifica con el valor de la fuente y la afirmacion "
+                    f"queda contradicha"),
+        )
     return ResultadoAnclaje(
-        ancla=_ancla_ensayo(nct_id, magnitud, False), coincide=Acuerdo.DISCREPANTE
-        if candidatos else None, candidatos=candidatos,
-        motivo=(f"el registro publico {len(candidatos)} analisis comparables y ninguno "
-                f"coincide con {magnitud}" if candidatos else
+        ancla=_ancla_ensayo(nct_id, magnitud, False), coincide=None,
+        candidatos=candidatos,
+        motivo=(f"el registro publico {len(candidatos)} analisis pero ninguno de clase "
+                f"{magnitud.clase.value}" if candidatos else
                 "no se hallo ningun analisis con medida de efecto en el desenlace pedido"),
     )
 
@@ -336,6 +365,7 @@ def anclar_en_etiqueta(generico: str, magnitud: Magnitud, fetcher: Fetcher,
     spl = ((etiqueta.get("openfda") or {}).get("spl_set_id") or [""])[0]
     campos = CAMPOS_ETIQUETA.get(tipo_hecho, ["dosage_and_administration"])
     candidatos: list[dict] = []
+    halladas: list[Magnitud] = []
     clave = (pista or "").lower().strip()
 
     for campo in campos:
@@ -347,6 +377,9 @@ def anclar_en_etiqueta(generico: str, magnitud: Magnitud, fetcher: Fetcher,
                     candidatos.append({"campo": f"{campo}[{k}]", "offset": inicio,
                                        "magnitud": str(cand),
                                        "frase": _recorte(frase, 25)})
+                    if cand.clase is magnitud.clase:
+                        halladas.append((cand, f"results[0].{campo}[{k}] offset {inicio}",
+                                         frase))
                     ac = comparar(cand, magnitud, tol)
                     if ac in (Acuerdo.IDENTICO, Acuerdo.EQUIVALENTE, Acuerdo.COMPATIBLE):
                         a = _ancla_etiqueta(generico, spl, cand, True)
@@ -356,11 +389,38 @@ def anclar_en_etiqueta(generico: str, magnitud: Magnitud, fetcher: Fetcher,
                                                 encontrado=cand, candidatos=candidatos,
                                                 motivo=f"coincide ({ac.value}) en {ruta}")
 
+    # Solo se auto-verifica cuando lo hallado es INEQUIVOCO. Si la seccion trae
+    # varias magnitudes de la misma clase que no concuerdan entre si (una dosis
+    # inicial y una maxima, por ejemplo), elegir una para declarar contradiccion
+    # seria inventar el hallazgo. Lo honesto es devolver los candidatos y pedir
+    # una pista que desambigue.
+    if halladas:
+        from .numeros import agrupar as _agrupar
+        grupos = _agrupar([c for c, _, _ in halladas])
+        if len(grupos) > 1:
+            return ResultadoAnclaje(
+                ancla=_ancla_etiqueta(generico, spl, magnitud, False),
+                coincide=None, candidatos=candidatos,
+                motivo=(f"la seccion trae {len(grupos)} magnitudes de clase "
+                        f"{magnitud.clase.value} que no concuerdan entre si "
+                        f"({', '.join(str(g[0]) for g in grupos)}): hace falta una pista "
+                        f"para desambiguar antes de declarar coincidencia o contradiccion"),
+            )
+        cand, ruta, frase = halladas[0]
+        a = _ancla_etiqueta(generico, spl, cand, True)
+        a.cita_corta = _recorte(frase, 20)
+        return ResultadoAnclaje(
+            ancla=a, coincide=Acuerdo.DISCREPANTE, candidatos=candidatos,
+            encontrado=cand, ruta=ruta,
+            motivo=(f"la etiqueta dice {cand} y la afirmacion dice {magnitud}: el ancla "
+                    f"se verifica con el valor de la etiqueta y la afirmacion queda "
+                    f"contradicha"),
+        )
     return ResultadoAnclaje(
         ancla=_ancla_etiqueta(generico, spl, magnitud, False),
-        coincide=Acuerdo.DISCREPANTE if candidatos else None, candidatos=candidatos,
-        motivo=(f"se parsearon {len(candidatos)} magnitudes en las secciones "
-                f"{campos} y ninguna coincide con {magnitud}" if candidatos else
+        coincide=None, candidatos=candidatos,
+        motivo=(f"se parsearon {len(candidatos)} magnitudes en las secciones {campos} "
+                f"pero ninguna de clase {magnitud.clase.value}" if candidatos else
                 f"no se parseo ninguna magnitud de clase {magnitud.clase.value} en {campos}"),
     )
 
@@ -386,21 +446,33 @@ def urllib_quote(s: str) -> str:
     return quote(s.strip())
 
 
-_FIN_ORACION = re.compile(r"(?<=[.;:])\s+(?=[A-Z(])")
+# Corta tras un punto seguido de mayuscula o parentesis, y tambien ANTES de un
+# numero de seccion del formato PLR ("2.1", "8.6", "12.1"), que es como estan
+# estructuradas las etiquetas de la FDA.
+_FIN_ORACION = re.compile(r"(?<=[.;:])\s+(?=[A-Z(])|(?<=[.;:])\s+(?=\d+\.\d+\s+[A-Z])")
+
+# Numero de seccion al inicio de una oracion. Hay que quitarlo antes de parsear:
+# "2.1 Recommended Dosage" se leeria como una dosis de 2.1 mg, que es exactamente
+# el tipo de cifra fantasma que envenena una boveda.
+_NUM_SECCION = re.compile(r"^\d{1,2}(?:\.\d{1,2}){0,2}\s+(?=[A-Z])")
 
 
 def _oraciones(texto: str) -> list[tuple[str, int]]:
     """Parte un bloque de prosa en oraciones con su desplazamiento.
 
     El desplazamiento importa: es lo que permite senalar el lugar exacto del
-    documento donde se leyo la cifra, y por tanto re-verificarla.
+    documento donde se leyo la cifra, y por tanto re-verificarla. Se calcula
+    sobre el texto ORIGINAL, no sobre el limpiado, para que siga apuntando al
+    documento real.
     """
     out: list[tuple[str, int]] = []
     pos = 0
     for trozo in _FIN_ORACION.split(texto or ""):
-        if trozo.strip():
-            out.append((trozo.strip(), pos))
-        pos += len(trozo) + 1
+        if trozo and trozo.strip():
+            limpio = _NUM_SECCION.sub("", trozo.strip())
+            desplazamiento = pos + (len(trozo) - len(trozo.lstrip()))
+            out.append((limpio, desplazamiento))
+        pos += len(trozo or "") + 1
     return out
 
 

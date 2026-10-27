@@ -121,12 +121,41 @@ def test_ancla_ensayo_equivalente_por_complemento():
 
 
 def test_ancla_ensayo_discrepa():
+    """Cuando la fuente dice OTRO numero, el ancla se verifica con el de la fuente.
+
+    Es deliberado y es la pieza que hace que una cifra equivocada se bloquee en
+    vez de degradarse. Si el ancla quedara sin verificar, la atestiguacion solo
+    veria "sin ancla" y mostraria la cifra equivocada con una etiqueta de no
+    anclada. Verificando el ancla con el valor de la fuente, la cifra afirmada
+    entra en contradiccion explicita y la atestiguacion la manda a NEGRO.
+    """
     r = anclar_en_ensayo("NCT03036150", p1("HR 0.39"), F, desenlace="renal compuesto")
-    ok(not r.ancla.verificada, "no debe verificar una cifra que no esta")
     ok(r.coincide is Acuerdo.DISCREPANTE, f"debe discrepar: {r.coincide}")
+    ok(r.ancla.verificada,
+       "el ancla se verifica con lo que SI dice la fuente, no con lo afirmado")
+    ok(r.encontrado is not None and abs(r.encontrado.valor - 0.61) < 1e-9,
+       f"el ancla debe llevar el valor real de la fuente: {r.encontrado}")
     ok(r.candidatos and len(r.candidatos) >= 1,
        "debe devolver lo que si encontro, para el revisor humano")
-    ok("0.61" in str(r.candidatos), f"los candidatos deben incluir el valor real: {r.candidatos}")
+
+
+def test_discrepancia_de_fuente_termina_en_negro():
+    """La prueba de punta a punta de lo anterior."""
+    from harness.atestiguar import Elicitacion, Encuadre, Veredicto, atestiguar
+    h = Hecho("un iSGLT2 reduce la progresion renal", ClaseHecho.EFECTO,
+              Poblacion("ERC con albuminuria"),
+              intervencion="iSGLT2", desenlace="desenlace renal compuesto")
+    r = anclar_en_ensayo("NCT03036150", p1("HR 0.39"), F, desenlace="renal compuesto")
+    aplicar_anclaje(h, [r])
+    rep = atestiguar(h, [
+        Elicitacion(p1("HR 0.39"), Encuadre.DIRECTO),
+        Elicitacion(p1("HR 0,39"), Encuadre.DESDE_ENSAYO),
+        Elicitacion(p1("HR 0.40"), Encuadre.SIN_OPCIONES),
+    ])
+    ok(rep.veredicto is Veredicto.NEGRO,
+       f"una cifra que contradice su propia fuente debe bloquearse: {rep.veredicto}")
+    ok("CONTRADICE_ANCLA" in rep.alertas, f"alerta faltante: {rep.alertas}")
+    ok(not h.mostrable() if h.veredicto == "NEGRO" else True, "no se muestra")
 
 
 def test_desenlace_filtra():
@@ -188,8 +217,48 @@ def test_ancla_etiqueta_pista_desambigua():
 
 def test_ancla_etiqueta_discrepa():
     r = anclar_en_etiqueta("dapagliflozin", p1("100 mg al dia"), F, tipo_hecho="dosis")
-    ok(not r.ancla.verificada, "una dosis diez veces mayor no debe verificar")
+    ok(r.coincide is Acuerdo.DISCREPANTE, f"una dosis diez veces mayor discrepa: {r.coincide}")
+    ok(r.ancla.verificada, "el ancla lleva lo que dice la etiqueta")
+    ok(r.encontrado is not None and r.encontrado.valor == 10,
+       f"la etiqueta dice 10 mg, no 100: {r.encontrado}")
     ok(r.candidatos, "debe reportar las magnitudes que si parseo")
+
+
+def test_numero_de_seccion_no_es_una_cifra_clinica():
+    """Regresion. Las etiquetas de la FDA estan numeradas por seccion: 2.1, 8.6,
+    12.1. Sin limpiar eso, "2.1 Recommended Dosage" se parsea como una dosis de
+    2.1 mg y el anclaje concluye que la etiqueta contradice la dosis real. Es
+    exactamente la clase de cifra fantasma que la Boveda tiene que no cometer.
+    """
+    from harness.anclar import _oraciones
+    frases = _oraciones("2.1 Recommended Dosage. The recommended dosage is 10 mg "
+                        "orally once daily. 8.6 Renal Impairment. No adjustment.")
+    ok(not any(f.startswith("2.1") or f.startswith("8.6") for f, _ in frases),
+       f"el numero de seccion debe quedar fuera de la oracion: {[f[:30] for f, _ in frases]}")
+    ok(all(o >= 0 for _, o in frases), "los desplazamientos deben ser validos")
+
+    mags = []
+    for f, _ in frases:
+        mags += parsear(f, clase_sugerida=Clase.DOSIS)
+    valores = sorted({m.valor for m in mags})
+    ok(2.1 not in valores and 8.6 not in valores,
+       f"ninguna dosis debe salir de la numeracion de seccion: {valores}")
+    ok(10 in valores, f"la dosis real si debe parsearse: {valores}")
+
+
+def test_varias_magnitudes_sin_pista_no_se_resuelve():
+    """Si la seccion trae dos dosis que no concuerdan, elegir una seria inventar."""
+    doc = {"results": [{
+        "openfda": {"spl_set_id": ["x"]},
+        "dosage_and_administration": [
+            "The starting dose is 25 mg once daily. The maximum dose is 200 mg once daily."
+        ],
+    }]}
+    r = anclar_en_etiqueta("farmaco-ambiguo", p1("50 mg al dia"),
+                           FetcherOffline({"farmaco-ambiguo": doc}), tipo_hecho="dosis")
+    ok(not r.ancla.verificada, "con magnitudes en conflicto no se auto-verifica")
+    ok(r.coincide is None, f"no se declara coincidencia ni contradiccion: {r.coincide}")
+    ok("desambiguar" in r.motivo, f"debe pedir una pista: {r.motivo}")
 
 
 def test_etiqueta_inexistente():
@@ -219,10 +288,13 @@ def test_aplicar_anclaje_es_destructivo():
                             verificada=True)])
     ok(h.techo() == "VERDE", "antes del anclaje el techo lo da el ancla declarada")
 
-    r = anclar_en_ensayo("NCT03036150", p1("HR 0.39"), F, desenlace="renal compuesto")
+    # un NCT mal formado: el anclaje ni lo intenta, asi que no hay ancla real
+    r = anclar_en_ensayo("DAPA-CKD", p1("HR 0.61"), F)
     aplicar_anclaje(h, [r])
     ok(len(h.anclas) == 1 and not h.anclas[0].verificada,
        "el anclaje real reemplaza el ancla declarada sin comprobar")
+    ok(h.anclas[0].localizador == "DAPA-CKD",
+       f"el localizador inventado se reemplaza por el real intentado: {h.anclas[0].localizador}")
     ok(h.techo() == "AMBAR",
        f"sin ancla verificada el techo baja a AMBAR: {h.techo()}")
     ok(h.diagnostico["anclaje"][0]["motivo"], "debe quedar el rastro del intento")

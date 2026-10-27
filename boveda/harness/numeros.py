@@ -402,9 +402,10 @@ def _parsear_bruto(texto: str, clase_sugerida: Optional[Clase] = None,
         lo, hi = _a_float(m.group(1)), _a_float(m.group(2))
         if lo is not None and hi is not None and hi > lo:
             clase, unidad = _clasificar(m.group(3), clase_sugerida, analito)
-            out.append(Magnitud(clase, lo, unidad, comparador=Comparador.RANGO,
-                                valor_sup=hi, analito=analito, bruto=texto))
-            return out
+            if clase is not None:
+                out.append(Magnitud(clase, lo, unidad, comparador=Comparador.RANGO,
+                                    valor_sup=hi, analito=analito, bruto=texto))
+                return out
 
     # 5. Magnitud simple con unidad
     for m in _RE_SIMPLE.finditer(t):
