@@ -2,7 +2,8 @@
 
 Núcleo de conocimiento clínico atestiguado, construible sin licenciar guías.
 
-**Estado:** el harness está implementado y probado — 249 aserciones, 0 fallos.
+**Estado:** el harness está implementado y probado — **577 aserciones, 0 fallos**, y la
+compuerta de licencias verificada contra datos reales del bucket público de PMC.
 Lo que falta está en [Lo que NO está verificado](#lo-que-no-está-verificado).
 
 ---
@@ -385,7 +386,8 @@ la distinción entre verificado y no verificado se respete también aquí.
 
 | | |
 |---|---|
-| **El adaptador HTTP está sin probar.** | La política de egress de este contenedor bloquea `clinicaltrials.gov` y `api.fda.gov` con 403 en el CONNECT. El camino **offline sí está probado** (es el de las pruebas y el de la reproducibilidad). Antes de confiar en `FetcherHTTP` hay que ejecutarlo contra la red real una vez. |
+| **El adaptador HTTP está probado a medias.** | Se ejecutó contra una fuente real: el bucket `pmc-oa-opendata` responde, se descargaron 17 registros y la compuerta de licencias corrió sobre sus `license_code` reales (fijación en `pruebas/fijaciones/pmc_licencias.json`). Falta probarlo contra `clinicaltrials.gov` y `api.fda.gov`, que la política de egress de este contenedor bloquea con 403 en el CONNECT. |
+| **La extracción desde PMC es un problema distinto del de ClinicalTrials.gov.** | Verificado: el JATS de PMC **no tiene ningún campo numérico clínico tipado**. No existe `paramType`, ni `ciLowerLimit`, ni `pValue`. Toda cifra vive como texto dentro de `<table-wrap>`, `<sec>` y `<p>`: el XML da estructura **documental**, no de datos. Así que un ancla en PMC cuesta NLP sobre tablas, mientras que una en ClinicalTrials.gov es un mapeo de campos. Las anclas de PMC son inherentemente más caras y más frágiles. |
 | **Las cifras del ejemplo son de demostración.** | `ejemplos/isglt2_nefroproteccion.py` está marcado: los valores e identificadores **no** están verificados contra la fuente primaria, por el mismo bloqueo. Lo que demuestra el ejemplo es el **pipeline**, no los números. |
 | **Las tasas de confabulación están sin medir.** | Los umbrales (`CUOTA_CONSENSO_VERDE = 0.67`, `MIN_ENCUADRES = 3`) son decisiones de producto razonadas, no constantes derivadas de datos. Subirlos reduce cobertura y aumenta precisión. Hay que calibrarlos contra un conjunto de hechos con respuesta conocida. |
 | **La exposición regulatoria está abierta.** | Si ORIONS *deriva* recomendaciones con dosis y umbrales, puede dejar de ser educación y volverse apoyo a la decisión clínica regulado (COFEPRIS en México, *Clinical Decision Support Software* de la FDA, regla 11 del MDR). **Este es el riesgo que puede matar el producto, y es más urgente que el de derechos de autor.** |
@@ -396,10 +398,12 @@ la distinción entre verificado y no verificado se respete también aquí.
 ## 8. Orden de construcción
 
 **Semana 1 — medir antes de escalar.**
-Correr `FetcherHTTP` contra la red real y confirmar las rutas de campo. Elegir 20
-hechos con respuesta conocida y publicada, correr el harness completo y medir:
-cuántos llegan a VERDE, cuántos a NEGRO, y **cuántos NEGRO son falsos positivos**.
-Calibrar los umbrales con eso. Sin esta medición, los umbrales son una opinión.
+Correr `FetcherHTTP` contra `clinicaltrials.gov` y `api.fda.gov` (contra PMC ya
+corrió) y confirmar las rutas de campo. Elegir 20 hechos con respuesta conocida y
+publicada, correr el harness completo y medir: cuántos llegan a VERDE, cuántos a
+NEGRO, y **cuántos NEGRO son falsos positivos**. Calibrar los umbrales con eso.
+Sin esta medición, los umbrales son una opinión — y una opinión documentada como
+tal es, además, prueba en contra si algún día hay un juicio.
 
 **Mes 1 — un dominio completo.**
 ERC con diabetes: ~40 hechos anclados y ~60 aristas de mecanismo. Es el dominio
@@ -456,7 +460,50 @@ boveda/
 
 ---
 
-## 10. En una línea
+## 10. Dónde la tesis se rompe, y por qué eso la mejora
+
+La investigación en cuatro dominios clínicos (ERC con diabetes, hipertensión,
+IC-FEr, preeclampsia) dio un resultado consistente que **modifica** la tesis en
+vez de confirmarla:
+
+| Qué | Reconstruible sin tocar una guía |
+|---|---|
+| Tamaños de efecto, intervalos de confianza, ventanas de elegibilidad, dosis | **85–95 %** |
+| Mecanismos fisiopatológicos | **95–100 %** |
+| La frase normativa, el umbral elegido, la etiqueta de Clase y Nivel | **0 %** |
+
+Ese 0 % no es un problema de licencia: **no son datos, son el juicio editorial
+del panel**, y no se derivan de ningún ensayo. Ninguna cantidad de dinero en
+licencias lo cambia, porque licenciar da derecho a *copiarlo*, no a derivarlo.
+
+Y ahí está el giro: ORIONS **no puede reproducir la recomendación, pero sí puede
+reconstruir la evidencia y derivar la suya** — y la discordancia entre paneles
+sobre la misma evidencia es exactamente el producto educativo que ninguna guía
+vende. La tesis no se refuta: queda obligada a su forma fuerte, que es la que
+`independencia.py` hace cumplir.
+
+**Huecos que son de evidencia, no de licencia** (y por eso son honestos, no
+vergonzosos):
+
+- **Los umbrales de suspensión no existen.** Nadie aleatorizó a suspender el
+  fármaco. Ni DAPA-CKD, ni CREDENCE, ni EMPA-KIDNEY. Reconstruible por debajo
+  del 50 %, y no hay fuente que lo arregle.
+- **El orden de los cuatro pilares de la IC-FEr.** Ningún ensayo comparó
+  secuencias. El algoritmo de secuenciación es consenso, no evidencia.
+- **Los megaensayos anteriores a 2007 no tienen sección de resultados.** RALES,
+  CIBIS-II, MERIT-HF, COPERNICUS, ALLHAT, UKPDS: todos previos a que fuera
+  obligatorio publicarlos. Dos de los cuatro pilares de la IC-FEr caen aquí, y
+  sus artículos primarios están en revistas cerradas.
+- **El bisoprolol no tiene indicación de IC aprobada en EE. UU.**, solo
+  hipertensión, así que su etiqueta CC0 no contiene nada de CIBIS-II.
+- **La rejilla de riesgo de KDIGO** (G1–G5 × A1–A3 con celdas de color): los
+  umbrales son derivables, la rejilla como objeto es suya.
+
+La investigación descartó **94 identificadores** (NCT, PMID, DOI) por no poder
+verificarlos en la sesión. Están fuera a propósito: un NCT inventado es el peor
+error posible en este sistema.
+
+## 11. En una línea
 
 La Bóveda no es un espejo de las guías: es un **sistema de medición** de hechos
 clínicos, con anclaje obligatorio, cuarentena y mecanismos auditables por

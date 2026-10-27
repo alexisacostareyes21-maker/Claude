@@ -180,9 +180,16 @@ def test_obligaciones_son_tareas_programadas():
 def test_pendientes_no_se_esconden():
     pend = pendientes_de_verificar()
     ok(len(pend) >= 3, f"lo no verificado debe quedar a la vista: {len(pend)}")
+    ok(all(p.startswith("[") for p in pend), "cada pendiente debe decir de que fuente es")
     todo = " ".join(pend)
-    ok("CC0" in todo, "debe decir que la grafia de CC0 esta sin verificar")
-    ok("CC0" in str(PERMITIDAS), "y CC0 debe estar en la lista blanca de todos modos")
+    # la grafia de CC0 YA se verifico contra el bucket real, asi que no debe
+    # seguir listada como pendiente: una lista de pendientes que no se depura
+    # deja de ser util y se vuelve decorativa
+    ok("grafia exacta de 'CC0'" not in todo,
+       f"lo ya verificado debe salir de la lista de pendientes: {todo[:200]}")
+    ok("CC0" in str(PERMITIDAS), "y CC0 sigue en la lista blanca, ahora verificada")
+    ok(any("retract" in p for p in pend),
+       "debe quedar pendiente la latencia del re-chequeo de retractaciones")
 
 
 def test_fuente_por_tipo_de_ancla():
@@ -190,6 +197,70 @@ def test_fuente_por_tipo_de_ancla():
     ok(fuente_de_ancla(TipoAncla.ETIQUETA_REGULADOR).clave == "openfda", "etiqueta")
     ok(fuente_de_ancla(TipoAncla.GUIA_GOBIERNO).clave == "vadod", "guia de gobierno")
     ok(fuente_de_ancla(TipoAncla.SIN_ANCLA) is None, "sin ancla no tiene fuente")
+
+
+# ------------------------------------------- contra datos reales del bucket
+def test_contra_registros_reales():
+    """Prueba la compuerta contra metadatos REALES del bucket publico de PMC,
+    consultados el 2026-10-27. La fijacion existe porque la compuerta depende de
+    una comparacion de cadena exacta: si NLM cambia una grafia, el filtro
+    empieza a descartar articulos validos en silencio y esta prueba lo detecta."""
+    import json
+    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "fijaciones", "pmc_licencias.json")
+    datos = json.load(open(ruta, encoding="utf-8"))
+    regs = datos["registros"]
+    ok(len(regs) >= 15, f"la fijacion debe traer una muestra util: {len(regs)}")
+    ok(datos["_fecha_consulta"], "debe constar la fecha de consulta")
+    ok("no refleja" in datos["_aviso"].lower(),
+       "los terminos del dataset exigen hacer constar que puede no ser lo mas actual")
+
+    # la fijacion no debe contener contenido de articulos, solo campos de licencia
+    permitidos = {"pmcid", "version", "license_code", "is_pmc_openaccess",
+                  "is_retracted", "is_historical_ocr", "is_manuscript"}
+    for r in regs:
+        ok(set(r) <= permitidos,
+           f"la fijacion solo lleva campos de licencia, no contenido: {set(r) - permitidos}")
+
+    codigos = {repr(r["license_code"]) for r in regs}
+    ok("'CC BY'" in codigos, f"la muestra debe traer CC BY: {codigos}")
+    ok("'CC0'" in codigos,
+       f"y CC0, cuya grafia exacta era un riesgo abierto hasta leerla: {codigos}")
+
+    veredictos = {}
+    for r in regs:
+        d = admisible_pmc(r)
+        clave = d.codigo.value if d.codigo else "ADMITIDO"
+        veredictos[clave] = veredictos.get(clave, 0) + 1
+        # ninguna decision puede quedar sin motivo legible
+        ok(bool(d.motivo), f"todo dictamen debe traer motivo: {r.get('pmcid')}")
+
+    ok(veredictos.get("ADMITIDO", 0) >= 5,
+       f"debe admitir los CC BY y CC0 no historicos: {veredictos}")
+    ok(veredictos.get("licencia_no_permitida", 0) >= 1,
+       f"debe rechazar los no comerciales: {veredictos}")
+
+
+def test_cc0_con_ocr_historico_se_rechaza_igual():
+    """Caso real y contraintuitivo del bucket: cuatro registros traen la licencia
+    mas permisiva posible (CC0) Y is_historical_ocr=True. La licencia los
+    permite; el ruido de OCR los inhabilita para extraer cifras. Las dos cosas a
+    la vez, y manda la segunda."""
+    d = admisible_pmc(reg(license_code="CC0", is_historical_ocr=True))
+    ok(not d, "CC0 no salva a un articulo con texto reconocido opticamente")
+    ok(d.codigo is MotivoRechazo.OCR_HISTORICO,
+       f"el motivo debe ser el OCR y no la licencia: {d.codigo}")
+
+    ok(bool(admisible_pmc(reg(license_code="CC0", is_historical_ocr=False))),
+       "el mismo CC0 sin OCR historico si entra")
+
+
+def test_tdm_viene_con_oa_falso():
+    """Otro patron real: los registros TDM del bucket traen
+    is_pmc_openaccess=False, lo que confirma que los dos campos no son
+    redundantes y que filtrar por uno solo no basta."""
+    d = admisible_pmc(reg(license_code="TDM", is_pmc_openaccess=False))
+    ok(not d, "TDM fuera del subconjunto abierto no entra")
 
 
 def main():

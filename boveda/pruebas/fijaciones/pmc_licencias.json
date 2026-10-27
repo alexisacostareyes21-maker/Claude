@@ -1,0 +1,161 @@
+{
+  "_aviso": "Metadatos de licencia de PMC Cloud Service (s3://pmc-oa-opendata), consultados el 2026-10-27. Solo campos de licencia y seguridad: ningun titulo, resumen ni contenido de articulo. Conforme a los terminos del dataset se hace constar que esta fijacion NO refleja necesariamente los datos mas actuales o exactos disponibles de la NLM: es una instantanea para prueba de regresion, no una redistribucion de datos.",
+  "_fecha_consulta": "2026-10-27",
+  "_fuente": "https://pmc-oa-opendata.s3.amazonaws.com/",
+  "_proposito": "probar harness.fuentes.admisible_pmc contra grafias reales de license_code",
+  "registros": [
+    {
+      "pmcid": "PMC10000000",
+      "version": 1,
+      "license_code": "CC0",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": true,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000002",
+      "version": 1,
+      "license_code": "CC0",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": true,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000005",
+      "version": 1,
+      "license_code": "CC0",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": true,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000010",
+      "version": 1,
+      "license_code": "CC0",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": true,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000020",
+      "version": 1,
+      "license_code": "TDM",
+      "is_pmc_openaccess": false,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": true
+    },
+    {
+      "pmcid": "PMC10000050",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000100",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000200",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10000300",
+      "version": 1,
+      "license_code": "TDM",
+      "is_pmc_openaccess": false,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": true
+    },
+    {
+      "pmcid": "PMC10000500",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10001000",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10002000",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10005000",
+      "version": 1,
+      "license_code": "CC0",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10010000",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10020000",
+      "version": 1,
+      "license_code": "CC BY-NC-ND",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC10100000",
+      "version": 1,
+      "license_code": "CC BY",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    },
+    {
+      "pmcid": "PMC11000000",
+      "version": 1,
+      "license_code": "CC BY-NC-ND",
+      "is_pmc_openaccess": true,
+      "is_retracted": false,
+      "is_historical_ocr": false,
+      "is_manuscript": false
+    }
+  ]
+}

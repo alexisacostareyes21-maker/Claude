@@ -61,15 +61,16 @@ from .hecho import TipoAncla
 
 # Cadenas EXACTAS verificadas en el campo license_code del bucket publico de
 # PMC. La grafia importa: la comparacion es exacta.
-LICENCIAS_VERIFICADAS = {"CC BY", "CC BY-NC", "TDM"}
+# Grafias confirmadas leyendo el campo real del bucket publico (2026-10-27).
+LICENCIAS_VERIFICADAS = {"CC BY", "CC BY-NC", "CC BY-NC-ND", "CC0", "TDM"}
 
 # Lista BLANCA. Solo estas entran. Todo lo demas, incluido null y cualquier
 # valor no visto antes, queda fuera por defecto.
 #
-# "CC0" esta aqui porque es la licencia correcta para admitir, pero su grafia
-# exacta en el campo real NO esta verificada: no se encontro un registro con
-# CC0 en la muestra inspeccionada. Si el filtro no encuentra articulos CC0, lo
-# primero que hay que revisar es la grafia, no la lista.
+# Grafias verificadas contra registros reales del bucket el 2026-10-27:
+# "CC BY" (mayusculas, un espacio) y "CC0" (sin espacio). La comparacion es de
+# cadena exacta, asi que la grafia no es un detalle: era un riesgo abierto hasta
+# que se leyo el campo real.
 PERMITIDAS = {"CC BY", "CC0"}
 
 # Permiten uso comercial pero NO sirven para la Boveda, y conviene nombrarlas
@@ -267,10 +268,14 @@ CATALOGO: dict[str, Fuente] = {
                          "la CC BY"),
         confianza_dictamen="alta",
         pendiente_verificar=[
-            "la grafia exacta de 'CC0' en el campo license_code real: la lista blanca "
-            "depende de una comparacion de cadena exacta",
-            "la lista cerrada y oficial de valores posibles de license_code",
-            "cuantos articulos son CC BY frente al total del subconjunto abierto",
+            "la lista CERRADA y oficial de valores posibles de license_code: el README "
+            "del dataset no la enumera. Verificadas empiricamente cinco grafias; "
+            "cualquier valor nuevo se rechaza por defecto, que es el comportamiento "
+            "correcto pero significa perder articulos en silencio hasta que alguien lo note",
+            "cuantos articulos son CC BY frente al total del subconjunto abierto: los dos "
+            "endpoints que lo darian siguen bloqueados en este entorno",
+            "si un articulo retractado DESPUES de ser ingerido cambia su is_retracted en "
+            "el bucket, y con que latencia: de eso depende el periodo del re-chequeo",
         ],
     ),
     "vadod": Fuente(
