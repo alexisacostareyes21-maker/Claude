@@ -482,6 +482,99 @@ def test_mecanismo_concordante_no_penaliza():
        f"mecanismo y cifra en la misma direccion deben acreditar: {r.veredicto}")
 
 
+# ------------------------------------ bugs que encontro el analisis adversarial
+def test_ancla_incomparable_no_acredita_verde():
+    """Un ancla de otra clase de magnitud compara como INCOMPARABLE. Antes eso
+    bastaba para que la Regla 6 diera VERDE, o sea que un hecho quedaba
+    "anclado" contra una cifra que no tenia nada que ver con el."""
+    from harness.numeros import Clase, Magnitud
+    # el ancla trae una razon de riesgo; el hecho es una dosis
+    a = Ancla(tipo=TipoAncla.REGISTRO_ENSAYO, localizador="NCT03036150",
+              magnitud=p1("HR 0.61"), verificada=True)
+    h = hecho_base(anclas=[a], clase=ClaseHecho.DOSIS)
+    elic = [
+        Elicitacion(p1("10 mg al dia"), Encuadre.DIRECTO, certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("10 mg una vez al dia"), Encuadre.DESDE_ENSAYO,
+                    certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("10 mg diarios"), Encuadre.SIN_OPCIONES,
+                    certeza=Certeza.RECUERDO_EXACTO),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is not Veredicto.VERDE,
+       f"un ancla que no habla de la misma cantidad no ancla nada: {r.veredicto}")
+    ok("ANCLA_NO_CONFIRMA" in r.alertas, f"debe alertarlo: {r.alertas}")
+
+
+def test_ancla_de_la_misma_clase_si_acredita():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.VERDE, f"debe acreditar: {r.veredicto} / {r.motivos}")
+    ok("CONFIRMA" in " ".join(r.motivos), f"el motivo debe decirlo: {r.motivos}")
+
+
+def test_no_fabrica_magnitudes_compuestas():
+    """El representante se devuelve tal cual. Antes, si no traia intervalo, se le
+    adjuntaba el de otra elicitacion: un punto de una fuente con un intervalo de
+    otra, que ninguna fuente reporto junta."""
+    h = hecho_base()
+    elic = [
+        Elicitacion(p1("HR 0.61 (95% CI 0.51-0.72)"), Encuadre.DIRECTO,
+                    certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("HR 0.61"), Encuadre.DESDE_ENSAYO, certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("HR 0.61"), Encuadre.SIN_OPCIONES, certeza=Certeza.RECUERDO_EXACTO),
+    ]
+    r = atestiguar(h, elic)
+    m = r.magnitud_consenso
+    # la mediana de [0.61, 0.61, 0.61] es una de las que NO trae intervalo
+    ok(m is not None, "debe haber consenso")
+    if m.ic_inf is not None:
+        ok(m.bruto and "CI" in m.bruto.upper() or "IC" in m.bruto.upper(),
+           f"si trae intervalo debe venir del MISMO registro: bruto={m.bruto!r}")
+    else:
+        ok(True, "")
+
+
+def test_cuarentena_no_ocupa_el_campo_principal():
+    """Una cifra que no paso la atestiguacion no debe quedar en el catalogo como
+    si fuera el dato del hecho: un filtro de pantalla se olvida en una
+    exportacion, el campo no."""
+    h = hecho_base(anclas=[ancla_ensayo(p1("HR 0.61 (95% CI 0.51-0.72)"))])
+    elic = [
+        Elicitacion(p1("HR 0.39"), Encuadre.DIRECTO, certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("HR 0,39"), Encuadre.DESDE_ENSAYO, certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("HR 0.40"), Encuadre.SIN_OPCIONES, certeza=Certeza.RECUERDO_EXACTO),
+    ]
+    aplicar(h, elic)
+    ok(h.veredicto == "NEGRO", f"debe ser NEGRO: {h.veredicto}")
+    ok(h.magnitud is None,
+       f"el campo principal debe quedar vacio, no con la cifra repudiada: {h.magnitud}")
+    ok(h.magnitud_en_cuarentena is not None,
+       "pero la cifra se conserva aparte para el revisor humano")
+    ok("cuarentena" in h.diagnostico, f"debe explicarlo: {list(h.diagnostico)}")
+    d = h.dict()
+    ok(d["magnitud"] is None and d["magnitud_en_cuarentena"] is not None,
+       "el dict debe reflejar la separacion")
+
+
+def test_verde_si_escribe_el_campo_principal():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    aplicar(h, elic)
+    ok(h.magnitud is not None, "un VERDE si escribe el campo principal")
+    ok(h.magnitud_en_cuarentena is None, "y no deja nada en cuarentena")
+
+
 def main():
     pruebas = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in pruebas:

@@ -248,9 +248,17 @@ def atestiguar(
         return rep(Veredicto.NEGRO, 0.0)
 
     # ---- Regla 1: contradiccion con el ancla. Peor que no tener dato.
+    # Se registra tambien que anclas CONFIRMAN de verdad, porque la sola
+    # existencia de un ancla verificada no acredita nada: un ancla de otra clase
+    # devuelve INCOMPARABLE, y con la version anterior eso bastaba para que la
+    # Regla 6 diera VERDE. Es decir, un hecho podia quedar "anclado" contra una
+    # cifra que no tenia nada que ver con el.
+    anclas_confirman: list = []
     if consenso is not None and anclas_ver:
         for a in anclas_ver:
             ac = comparar(a.magnitud, consenso, tol)
+            if ac in (Acuerdo.IDENTICO, Acuerdo.EQUIVALENTE):
+                anclas_confirman.append(a)
             if ac is Acuerdo.DISCREPANTE:
                 motivos.append(
                     f"el consenso ({consenso}) contradice el ancla "
@@ -355,19 +363,28 @@ def atestiguar(
     # ---- Regla 6: acreditacion.
     conf = _confianza(cuota, n_enc, len(mags), anclas_ver, consenso)
 
-    if anclas_ver and cuota >= CUOTA_CONSENSO_VERDE and apto_verde:
+    if anclas_ver and not anclas_confirman:
+        alertas.append("ANCLA_NO_CONFIRMA")
+        motivos.append(
+            f"hay {len(anclas_ver)} ancla(s) verificada(s) pero ninguna confirma el "
+            f"consenso {consenso}: comparan como incomparables, normalmente porque son "
+            f"de otra clase de magnitud. Un ancla que no habla de la misma cantidad no "
+            f"ancla nada"
+        )
+
+    if anclas_confirman and cuota >= CUOTA_CONSENSO_VERDE and apto_verde:
         techo = hecho.techo()
         if techo == "VERDE":
             motivos.append(
-                f"anclado en {nombre_ancla} y confirmado por {len(dominante)}/{len(mags)} "
-                f"elicitaciones en {n_enc} encuadres"
+                f"anclado en {nombre_ancla}, el ancla CONFIRMA la cifra, y la respaldan "
+                f"{len(dominante)}/{len(mags)} elicitaciones en {n_enc} encuadres"
             )
             return rep(Veredicto.VERDE, conf)
         motivos.append(f"consenso solido pero el ancla {nombre_ancla} solo alcanza {techo}")
         return rep(Veredicto.AMBAR, conf * 0.8)
 
-    if not anclas_ver:
-        motivos.append("consenso sin ancla verificada: se muestra como no anclado")
+    if not anclas_confirman:
+        motivos.append("consenso sin ancla que lo confirme: se muestra como no anclado")
         alertas.append("SIN_ANCLA")
     return rep(Veredicto.AMBAR, conf * 0.7)
 
@@ -386,22 +403,23 @@ def _signo_de_cifra(m: Magnitud) -> int:
 
 
 def _representante(grupo: list[Magnitud]) -> Magnitud:
-    """Elige el representante del grupo: el de valor mediano.
+    """Elige el representante del grupo: el de valor mediano, tal cual.
 
     La mediana, no la media: una elicitacion extrema no debe arrastrar la cifra
     que ORIONS va a mostrar.
+
+    Y se devuelve SIN MODIFICAR. La version anterior, cuando el representante no
+    traia intervalo de confianza, le adjuntaba el intervalo de otra elicitacion
+    cercana. El resultado era una magnitud compuesta: un punto estimado de una
+    fuente con un intervalo de otra, que ninguna fuente reporto junta. Eso no es
+    enriquecer el dato, es fabricarlo, y ademas vuelve inverificable el anclaje,
+    porque la cifra ya no coincide con ningun registro. El punto y su intervalo
+    vienen del mismo registro, o no hay intervalo.
     """
     if len(grupo) == 1:
         return grupo[0]
     ordenados = sorted(grupo, key=lambda m: m.valor)
-    medio = ordenados[len(ordenados) // 2]
-    # prefiere un representante que traiga intervalo de confianza
-    con_ic = [m for m in grupo if m.ic_inf is not None]
-    if con_ic and medio.ic_inf is None:
-        cerca = min(con_ic, key=lambda m: abs(m.valor - medio.valor))
-        if abs(cerca.valor - medio.valor) / max(abs(medio.valor), 1e-9) <= 0.05:
-            return cerca
-    return medio
+    return ordenados[len(ordenados) // 2]
 
 
 def _confianza(cuota: float, n_enc: int, n: int,
@@ -452,8 +470,20 @@ def aplicar(hecho: Hecho, elicitaciones: Sequence[Elicitacion],
     hecho.veredicto = r.veredicto.value
     hecho.confianza = r.confianza
     hecho.diagnostico = r.dict()
+    # La cifra de consenso entra al campo principal SOLO si el veredicto la hace
+    # exhibible. Antes se escribia siempre, de modo que una cifra en cuarentena
+    # quedaba en el catalogo como si fuera el dato del hecho, y lo unico que la
+    # contenia era un filtro de pantalla. Un filtro de pantalla se olvida en una
+    # exportacion, en un informe o en un endpoint nuevo; el campo no.
     if r.magnitud_consenso is not None and hecho.magnitud is None:
-        hecho.magnitud = r.magnitud_consenso
+        if r.veredicto in (Veredicto.VERDE, Veredicto.AMBAR):
+            hecho.magnitud = r.magnitud_consenso
+        else:
+            hecho.magnitud_en_cuarentena = r.magnitud_consenso
+            hecho.diagnostico["cuarentena"] = (
+                f"la cifra de consenso {r.magnitud_consenso} no se escribe en el campo "
+                f"principal porque el veredicto es {r.veredicto.value}"
+            )
     if momento:
         detalle = (f"de {previo[0]}/{previo[1]} a {hecho.veredicto}/"
                    f"{round(hecho.confianza, 4)}")

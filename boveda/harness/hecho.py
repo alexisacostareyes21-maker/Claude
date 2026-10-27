@@ -144,6 +144,10 @@ class Hecho:
     clase: ClaseHecho
     poblacion: Poblacion
     magnitud: Optional[Magnitud] = None
+    # Separado del campo principal a proposito: una cifra que no paso la
+    # atestiguacion se conserva para que el revisor humano la vea, pero no
+    # ocupa el lugar del dato del hecho.
+    magnitud_en_cuarentena: Optional[Magnitud] = None
 
     intervencion: str = ""
     comparador_clinico: str = ""        # frente a que se compara
@@ -281,6 +285,8 @@ class Hecho:
         d["id"] = self.id()
         d["clase"] = self.clase.value
         d["magnitud"] = self.magnitud.dict() if self.magnitud else None
+        d["magnitud_en_cuarentena"] = (self.magnitud_en_cuarentena.dict()
+                                       if self.magnitud_en_cuarentena else None)
         d["anclas"] = [a.dict() for a in self.anclas]
         d["techo"] = self.techo()
         ok, motivo = self.mostrable()
