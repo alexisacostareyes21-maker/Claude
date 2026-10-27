@@ -1,0 +1,473 @@
+{
+  "hecho": {
+    "enunciado": "En adultos con enfermedad renal cronica y albuminuria, agregar un inhibidor de SGLT2 al tratamiento de base reduce el riesgo del desenlace renal compuesto frente a placebo.",
+    "clase": "efecto",
+    "poblacion": {
+      "condicion": "enfermedad renal cronica con albuminuria",
+      "edad_min": 18,
+      "edad_max": null,
+      "inclusion": [
+        "eGFR reducido",
+        "cociente albumina/creatinina elevado",
+        "tratamiento de base con bloqueo del sistema renina-angiotensina"
+      ],
+      "exclusion": [
+        "diabetes tipo 1",
+        "enfermedad renal poliquistica"
+      ],
+      "nivel_atencion": "segundo nivel",
+      "pais_contexto": "internacional"
+    },
+    "magnitud": {
+      "clase": "razon_riesgo",
+      "valor": 0.61,
+      "unidad": null,
+      "ic_inf": 0.51,
+      "ic_sup": 0.72,
+      "comparador": "=",
+      "valor_sup": null,
+      "analito": null,
+      "por_dia": null,
+      "etiqueta": null,
+      "bruto": "HR 0.61 (95% CI 0.51-0.72)"
+    },
+    "intervencion": "inhibicion de SGLT2",
+    "comparador_clinico": "placebo sobre tratamiento de base",
+    "desenlace": "progresion de la enfermedad renal cronica",
+    "anclas": [
+      {
+        "tipo": "registro_ensayo",
+        "localizador": "NCT03036150",
+        "url": "https://clinicaltrials.gov/study/NCT03036150",
+        "magnitud": {
+          "clase": "razon_riesgo",
+          "valor": 0.61,
+          "unidad": null,
+          "ic_inf": 0.51,
+          "ic_sup": 0.72,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "HR 0.61 (95% CI 0.51-0.72)"
+        },
+        "cita_corta": "",
+        "fecha_consulta": "",
+        "licencia": "dominio publico (obra del gobierno de EEUU)",
+        "verificada": true
+      },
+      {
+        "tipo": "etiqueta",
+        "localizador": "SPL:dapagliflozina:14.CLINICAL_STUDIES",
+        "url": "https://api.fda.gov/drug/label.json?search=openfda.generic_name:dapagliflozin",
+        "magnitud": {
+          "clase": "razon_riesgo",
+          "valor": 0.61,
+          "unidad": null,
+          "ic_inf": 0.51,
+          "ic_sup": 0.72,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "HR 0.61 (95% CI 0.51-0.72)"
+        },
+        "cita_corta": "",
+        "fecha_consulta": "",
+        "licencia": "dominio publico (etiqueta FDA)",
+        "verificada": true
+      }
+    ],
+    "mecanismo": [],
+    "delta_mexico": "Verificar disponibilidad y clave en el Compendio Nacional de Insumos para la Salud antes de ensenarlo como primera linea en primer nivel. PENDIENTE DE VERIFICAR.",
+    "trampa_enarm": "Se confunde la caida inicial y reversible del eGFR, que es el efecto hemodinamico esperado, con dano renal, y se suspende el farmaco justo cuando esta funcionando.",
+    "veredicto": "VERDE",
+    "confianza": 0.6667,
+    "diagnostico": {
+      "veredicto": "VERDE",
+      "confianza": 0.667,
+      "magnitud_consenso": {
+        "clase": "razon_riesgo",
+        "valor": 0.61,
+        "unidad": null,
+        "ic_inf": 0.51,
+        "ic_sup": 0.72,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "HR 0.61 (95% CI 0.51-0.72)"
+      },
+      "n_elicitaciones": 5,
+      "n_encuadres": 5,
+      "cuota_consenso": 0.8,
+      "anclas_verificadas": 2,
+      "ancla_mas_fuerte": "registro_ensayo",
+      "motivos": [
+        "anclado en registro_ensayo y confirmado por 4/5 elicitaciones en 5 encuadres"
+      ],
+      "alertas": [],
+      "grupos": [
+        [
+          "razon_riesgo:0.61 (IC95 0.51-0.72)",
+          "razon_riesgo:0.61",
+          "reduccion_relativa:0.39",
+          "razon_riesgo:0.61"
+        ],
+        [
+          "razon_riesgo:0.63"
+        ]
+      ]
+    },
+    "version": 1,
+    "vigente": true,
+    "revisar_si": [
+      "aparece un ensayo de fase 3 con desenlace renal en esta poblacion",
+      "cambia la etiqueta del regulador",
+      "se publica una revision sistematica viva que incluya datos nuevos"
+    ],
+    "firmado_por": "",
+    "reemplaza": "",
+    "id": "H7ac21c76830c7ad7",
+    "techo": "VERDE",
+    "mostrable": true
+  },
+  "grafo": {
+    "nodos": [
+      {
+        "nombre": "inhibicion de SGLT2",
+        "nivel": "farmaco",
+        "variable": "ocupacion del cotransportador",
+        "unidad": "",
+        "sinonimos": [
+          "dapagliflozina",
+          "iSGLT2",
+          "empagliflozina"
+        ],
+        "id": "Ne796c5e10d08"
+      },
+      {
+        "nombre": "reabsorcion proximal de sodio",
+        "nivel": "celular",
+        "variable": "fraccion de sodio reabsorbido en el tubulo proximal",
+        "unidad": "%",
+        "sinonimos": [],
+        "id": "N28b5da138513"
+      },
+      {
+        "nombre": "sodio en la macula densa",
+        "nivel": "tisular",
+        "variable": "concentracion de sodio en el aparato yuxtaglomerular",
+        "unidad": "mmol/L",
+        "sinonimos": [],
+        "id": "Ncfbd99f41ec2"
+      },
+      {
+        "nombre": "retroalimentacion tubuloglomerular",
+        "nivel": "tisular",
+        "variable": "tono de la senal adenosina/ATP",
+        "unidad": "",
+        "sinonimos": [],
+        "id": "N67cec4aaedaa"
+      },
+      {
+        "nombre": "tono de la arteriola aferente",
+        "nivel": "organo",
+        "variable": "resistencia arteriolar aferente",
+        "unidad": "",
+        "sinonimos": [],
+        "id": "Nfded9ae2cf7f"
+      },
+      {
+        "nombre": "presion intraglomerular",
+        "nivel": "organo",
+        "variable": "presion capilar glomerular",
+        "unidad": "mmHg",
+        "sinonimos": [],
+        "id": "Nf5f55316cf87"
+      },
+      {
+        "nombre": "hiperfiltracion glomerular",
+        "nivel": "organo",
+        "variable": "tasa de filtracion por nefrona",
+        "unidad": "nL/min",
+        "sinonimos": [],
+        "id": "Nf45e5003428c"
+      },
+      {
+        "nombre": "albuminuria",
+        "nivel": "sistemico",
+        "variable": "cociente albumina/creatinina",
+        "unidad": "mg/g",
+        "sinonimos": [],
+        "id": "N62765b55a7ee"
+      },
+      {
+        "nombre": "progresion de la enfermedad renal cronica",
+        "nivel": "clinico",
+        "variable": "caida sostenida del eGFR",
+        "unidad": "mL/min/1.73m2/ano",
+        "sinonimos": [
+          "desenlace renal compuesto",
+          "progresion renal"
+        ],
+        "id": "Ncb854ae04141"
+      },
+      {
+        "nombre": "glucosuria",
+        "nivel": "sistemico",
+        "variable": "glucosa urinaria",
+        "unidad": "g/dia",
+        "sinonimos": [],
+        "id": "N9c0e8070bf9c"
+      },
+      {
+        "nombre": "natriuresis",
+        "nivel": "sistemico",
+        "variable": "excrecion de sodio",
+        "unidad": "mmol/dia",
+        "sinonimos": [],
+        "id": "N07e67365ebb3"
+      },
+      {
+        "nombre": "volumen plasmatico",
+        "nivel": "sistemico",
+        "variable": "volumen intravascular",
+        "unidad": "mL",
+        "sinonimos": [],
+        "id": "N79eb428e78d1"
+      },
+      {
+        "nombre": "eritropoyesis",
+        "nivel": "sistemico",
+        "variable": "hematocrito",
+        "unidad": "%",
+        "sinonimos": [],
+        "id": "N07ac60193102"
+      },
+      {
+        "nombre": "cuerpos cetonicos circulantes",
+        "nivel": "sistemico",
+        "variable": "beta-hidroxibutirato",
+        "unidad": "mmol/L",
+        "sinonimos": [],
+        "id": "N7dc0900e5a24"
+      },
+      {
+        "nombre": "hipoxia tubular",
+        "nivel": "tisular",
+        "variable": "demanda de oxigeno tubular",
+        "unidad": "",
+        "sinonimos": [],
+        "id": "Na52c98b22038"
+      }
+    ],
+    "aristas": [
+      {
+        "origen": "Ne796c5e10d08",
+        "destino": "N28b5da138513",
+        "signo": -1,
+        "mecanismo": "bloqueo del cotransportador sodio-glucosa tipo 2 en el tubulo contorneado proximal",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [
+          "SPL:dapagliflozina:clinical_pharmacology"
+        ],
+        "confianza": 0.95,
+        "hechos": [],
+        "id": "A55d714949227"
+      },
+      {
+        "origen": "N28b5da138513",
+        "destino": "Ncfbd99f41ec2",
+        "signo": -1,
+        "mecanismo": "lo que no se reabsorbe proximalmente llega distalmente al aparato yuxtaglomerular",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.9,
+        "hechos": [],
+        "id": "A9696b0fcd063"
+      },
+      {
+        "origen": "Ncfbd99f41ec2",
+        "destino": "N67cec4aaedaa",
+        "signo": 1,
+        "mecanismo": "la macula densa detecta mas cloruro de sodio y libera adenosina",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.85,
+        "hechos": [],
+        "id": "A22950d9fad39"
+      },
+      {
+        "origen": "N67cec4aaedaa",
+        "destino": "Nfded9ae2cf7f",
+        "signo": 1,
+        "mecanismo": "la adenosina actua sobre receptores A1 y contrae la arteriola aferente",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.85,
+        "hechos": [],
+        "id": "A0bd8e1ad2cf2"
+      },
+      {
+        "origen": "Nfded9ae2cf7f",
+        "destino": "Nf5f55316cf87",
+        "signo": -1,
+        "mecanismo": "mayor resistencia de entrada reduce la presion transmitida al capilar glomerular",
+        "magnitud_relativa": null,
+        "latencia": "dias",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.9,
+        "hechos": [],
+        "id": "A1633163bacdd"
+      },
+      {
+        "origen": "Nf5f55316cf87",
+        "destino": "Nf45e5003428c",
+        "signo": 1,
+        "mecanismo": "la filtracion por nefrona depende de la presion hidrostatica capilar",
+        "magnitud_relativa": null,
+        "latencia": "dias",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.9,
+        "hechos": [],
+        "id": "A10ec80936636"
+      },
+      {
+        "origen": "Nf45e5003428c",
+        "destino": "N62765b55a7ee",
+        "signo": 1,
+        "mecanismo": "el estres mecanico sostenido dana la barrera de filtracion",
+        "magnitud_relativa": null,
+        "latencia": "semanas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.85,
+        "hechos": [],
+        "id": "Afaaadedbf751"
+      },
+      {
+        "origen": "N62765b55a7ee",
+        "destino": "Ncb854ae04141",
+        "signo": 1,
+        "mecanismo": "la albuminuria es a la vez marcador y mediador de dano tubulointersticial",
+        "magnitud_relativa": null,
+        "latencia": "meses",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.8,
+        "hechos": [],
+        "id": "A353e0c67032d"
+      },
+      {
+        "origen": "Ne796c5e10d08",
+        "destino": "N9c0e8070bf9c",
+        "signo": 1,
+        "mecanismo": "perdida renal de glucosa",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.95,
+        "hechos": [],
+        "id": "A44fd81b087e3"
+      },
+      {
+        "origen": "Ne796c5e10d08",
+        "destino": "N07e67365ebb3",
+        "signo": 1,
+        "mecanismo": "sodio no reabsorbido excretado",
+        "magnitud_relativa": null,
+        "latencia": "horas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.9,
+        "hechos": [],
+        "id": "Aa00898fbfe0c"
+      },
+      {
+        "origen": "N07e67365ebb3",
+        "destino": "N79eb428e78d1",
+        "signo": -1,
+        "mecanismo": "diuresis osmotica y natriuresis",
+        "magnitud_relativa": null,
+        "latencia": "dias",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.85,
+        "hechos": [],
+        "id": "Afcb3eb466354"
+      },
+      {
+        "origen": "N79eb428e78d1",
+        "destino": "Ncb854ae04141",
+        "signo": 1,
+        "mecanismo": "la sobrecarga de volumen sostiene la hipertension glomerular",
+        "magnitud_relativa": null,
+        "latencia": "meses",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.6,
+        "hechos": [],
+        "id": "A021f7988edbb"
+      },
+      {
+        "origen": "Ne796c5e10d08",
+        "destino": "N07ac60193102",
+        "signo": 1,
+        "mecanismo": "menor consumo de oxigeno del tubulo proximal restaura la produccion de eritropoyetina",
+        "magnitud_relativa": null,
+        "latencia": "semanas",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.7,
+        "hechos": [],
+        "id": "A2631c41b54ce"
+      },
+      {
+        "origen": "Ne796c5e10d08",
+        "destino": "N7dc0900e5a24",
+        "signo": 1,
+        "mecanismo": "cambio de sustrato hacia la oxidacion de acidos grasos",
+        "magnitud_relativa": null,
+        "latencia": "dias",
+        "contexto": "ERC con albuminuria",
+        "anclas": [],
+        "confianza": 0.75,
+        "hechos": [],
+        "id": "Aebb1c111d5bf"
+      }
+    ]
+  },
+  "ruta_principal": {
+    "nodos": [
+      "inhibicion de SGLT2",
+      "reabsorcion proximal de sodio",
+      "sodio en la macula densa",
+      "retroalimentacion tubuloglomerular",
+      "tono de la arteriola aferente",
+      "presion intraglomerular",
+      "hiperfiltracion glomerular",
+      "albuminuria",
+      "progresion de la enfermedad renal cronica"
+    ],
+    "signo_neto": -1,
+    "confianza": 0.8,
+    "explicacion": "1. inhibicion de SGLT2 disminuye reabsorcion proximal de sodio (bloqueo del cotransportador sodio-glucosa tipo 2 en el tubulo contorneado proximal) [horas]\n2. reabsorcion proximal de sodio disminuye sodio en la macula densa (lo que no se reabsorbe proximalmente llega distalmente al aparato yuxtaglomerular) [horas]\n3. sodio en la macula densa aumenta retroalimentacion tubuloglomerular (la macula densa detecta mas cloruro de sodio y libera adenosina) [horas]\n4. retroalimentacion tubuloglomerular aumenta tono de la arteriola aferente (la adenosina actua sobre receptores A1 y contrae la arteriola aferente) [horas]\n5. tono de la arteriola aferente disminuye presion intraglomerular (mayor resistencia de entrada reduce la presion transmitida al capilar glomerular) [dias]\n6. presion intraglomerular aumenta hiperfiltracion glomerular (la filtracion por nefrona depende de la presion hidrostatica capilar) [dias]\n7. hiperfiltracion glomerular aumenta albuminuria (el estres mecanico sostenido dana la barrera de filtracion) [semanas]\n8. albuminuria aumenta progresion de la enfermedad renal cronica (la albuminuria es a la vez marcador y mediador de dano tubulointersticial) [meses]\nEfecto neto: inhibicion de SGLT2 disminuye progresion de la enfermedad renal cronica (confianza de la ruta 0.80)"
+  },
+  "contradicciones": [],
+  "aviso": "cifras e identificadores NO verificados contra la fuente primaria: demostracion del pipeline, no contenido de produccion"
+}
