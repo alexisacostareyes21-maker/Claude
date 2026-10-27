@@ -321,12 +321,12 @@ class Motor:
         return {
             "curaciones": curaciones,
             "hechos": hechos,
-            "mostrables": [h for h in hechos if h.mostrable()],
+            "mostrables": [h for h in hechos if h.se_muestra()],
             "cola_de_revision": cola_de_revision(hechos),
             "llamadas_al_modelo": gastado,
             "llamadas_por_hecho": round(gastado / len(curaciones), 2) if curaciones else 0,
             "por_veredicto": por_veredicto,
-            "tasa_mostrable": (round(len([h for h in hechos if h.mostrable()]) / len(hechos), 3)
+            "tasa_mostrable": (round(len([h for h in hechos if h.se_muestra()]) / len(hechos), 3)
                                if hechos else 0),
         }
 

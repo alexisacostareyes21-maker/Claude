@@ -647,11 +647,34 @@ def agrupar(mags: Iterable[Magnitud], tol: float = 0.02) -> list[list[Magnitud]]
     return grupos
 
 
-def orden_de_magnitud_distinto(a: Magnitud, b: Magnitud) -> bool:
-    """Detecta el error mas peligroso en dosis: el factor 10.
+# Factor a partir del cual una discrepancia deja de ser imprecision y pasa a ser
+# un error de categoria. NO es el mismo para todas las clases, y suponer que si
+# lo era fue un error de diseno con consecuencias clinicas: en una dosis, un
+# factor 2 es una sobredosis, no una aproximacion. El umbral generico de 10 solo
+# atrapaba el error de la coma decimal y dejaba pasar el error de la mitad o el
+# doble, que es mucho mas frecuente y igual de letal.
+FACTOR_ALARMA = {
+    "dosis": 1.6,            # media dosis o dosis doble: nunca es imprecision
+    "concentracion": 1.8,
+    "presion": 1.4,          # 130 frente a 180 es otra conducta clinica
+    "tfg": 1.5,              # cruza estadios de enfermedad renal
+    "conteo": 2.0,
+}
+FACTOR_ALARMA_DEFECTO = 9.5  # para razones de riesgo y adimensionales
 
-    Un verificador textual puntua '10 mg' y '100 mg' como casi identicos.
-    Aqui se marca explicitamente.
+
+def factor_de_alarma(clase) -> float:
+    nombre = clase.value if hasattr(clase, "value") else str(clase)
+    return FACTOR_ALARMA.get(nombre, FACTOR_ALARMA_DEFECTO)
+
+
+def orden_de_magnitud_distinto(a: Magnitud, b: Magnitud,
+                               factor: Optional[float] = None) -> bool:
+    """Detecta una discrepancia que ya no es imprecision sino error de categoria.
+
+    Un verificador textual puntua '10 mg' y '100 mg' como casi identicos. Y uno
+    con umbral fijo en 10 trata '10 mg' y '20 mg' como una diferencia menor,
+    cuando es una dosis doble. El factor depende de la clase.
     """
     if a.clase is not b.clase:
         return False
@@ -659,12 +682,13 @@ def orden_de_magnitud_distinto(a: Magnitud, b: Magnitud) -> bool:
     vb = b.por_dia if b.por_dia is not None else b.valor
     if va <= 0 or vb <= 0:
         return False
-    r = max(va, vb) / min(va, vb)
-    return r >= 9.5
+    f = factor if factor is not None else factor_de_alarma(a.clase)
+    return max(va, vb) / min(va, vb) >= f
 
 
 __all__ = [
     "Clase", "Comparador", "Magnitud", "Acuerdo",
     "parsear", "comparar", "agrupar", "equivalentes", "plausible",
     "convertir_concentracion", "orden_de_magnitud_distinto",
+    "FACTOR_ALARMA", "factor_de_alarma",
 ]

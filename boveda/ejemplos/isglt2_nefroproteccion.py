@@ -260,6 +260,7 @@ def main() -> int:
     print(f"    cuota de consenso: {d['cuota_consenso']:.0%}")
     print(f"    anclas verificadas:{d['anclas_verificadas']}  (techo: {h.techo()})")
     print(f"    mostrable:         {h.mostrable()}")
+    print(f"    huella:            {h.huella()}")
     for m in d["motivos"]:
         print(f"    motivo:            {m}")
     for a in d["alertas"]:

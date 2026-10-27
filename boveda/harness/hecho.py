@@ -31,6 +31,17 @@ from typing import Optional
 
 from .numeros import Magnitud, Clase
 
+# Clases donde una cifra equivocada no es un dato malo: es una conducta clinica
+# sobre un paciente. Para estas, ORIONS no muestra nada que no este anclado en
+# una fuente de regulador o de gobierno.
+CLASES_CLINICAS_CRITICAS = {Clase.DOSIS, Clase.CONCENTRACION, Clase.PRESION, Clase.TFG}
+
+# Piso de confianza para exhibir. Un hecho por debajo no se muestra aunque su
+# veredicto lo permita. Existe porque un AMBAR con confianza 0.31 es,
+# literalmente, una cifra que el sistema casi no cree y que aun asi entraria al
+# mazo de repeticion espaciada, cuyo proposito es que el estudiante la retenga.
+PISO_CONFIANZA = 0.5
+
 
 class ClaseHecho(str, Enum):
     UMBRAL = "umbral"                    # corte diagnostico o de decision
@@ -150,6 +161,7 @@ class Hecho:
 
     version: int = 1
     vigente: bool = True
+    historial: list = field(default_factory=list)   # bitacora append-only
     revisar_si: list[str] = field(default_factory=list)  # disparadores de frescura
     firmado_por: str = ""               # medico validador, si lo hubo
     reemplaza: str = ""                 # id del hecho que deja obsoleto
@@ -183,13 +195,86 @@ class Hecho:
         a = self.ancla_mas_fuerte()
         return TECHO_POR_ANCLA[a.tipo] if a else TECHO_POR_ANCLA[TipoAncla.SIN_ANCLA]
 
-    def mostrable(self) -> bool:
-        """Solo VERDE y AMBAR se muestran. AMBAR va etiquetado como no anclado.
+    def mostrable(self) -> tuple:
+        """(se_muestra, motivo). Tres compuertas, no una.
 
-        ROJO y NEGRO nunca llegan al estudiante. Un hecho ausente le cuesta
-        una pregunta; un hecho equivocado le cuesta una conducta clinica.
+        La primera version de este metodo devolvia True para todo AMBAR, sin
+        mirar la clase ni la confianza. Eso permitia exhibir, y meter al mazo de
+        repeticion espaciada, una DOSIS sin ancla verificada y con confianza
+        0.31. El proposito del mazo es que el estudiante retenga la cifra, asi
+        que el defecto no era mostrar un dato flojo: era ensenarlo.
+
+        1. Veredicto: ROJO, NEGRO y GRIS nunca salen.
+        2. Piso de confianza: por debajo no se muestra aunque el veredicto pase.
+        3. Clase clinica critica: una dosis, una concentracion, una presion o
+           una tasa de filtracion requieren VERDE, es decir ancla verificada.
+           Para estas clases no existe el "se muestra etiquetado como no
+           anclado": o esta en la etiqueta del regulador, o no se ensena.
         """
-        return self.veredicto in ("VERDE", "AMBAR")
+        if self.veredicto not in ("VERDE", "AMBAR"):
+            return (False, f"veredicto {self.veredicto}")
+        # El piso aplica solo a AMBAR. Un VERDE ya paso las compuertas duras
+        # (ancla verificada, consenso suficiente, tres encuadres distintos), y
+        # exigirle ademas un minimo de confianza seria contar dos veces lo
+        # mismo: la confianza es una gradacion DENTRO de lo publicable, usada
+        # para ordenar y para priorizar la cola de revision, no una tercera
+        # compuerta. El riesgo que el piso existe para cerrar es el AMBAR flojo.
+        if self.veredicto == "AMBAR" and self.confianza < PISO_CONFIANZA:
+            return (False, f"AMBAR con confianza {self.confianza:.2f}, por debajo del "
+                           f"piso {PISO_CONFIANZA}: sin ancla verificada y con poca "
+                           f"triangulacion no se ensena")
+        if self.magnitud is not None and self.magnitud.clase in CLASES_CLINICAS_CRITICAS:
+            if self.veredicto != "VERDE":
+                return (False, f"clase clinica critica ({self.magnitud.clase.value}) "
+                               f"sin ancla verificada: para una cifra que se traduce en "
+                               f"conducta no existe el modo 'no anclado'")
+        return (True, "")
+
+    def se_muestra(self) -> bool:
+        """Azucar booleano de mostrable(), para condicionales."""
+        return self.mostrable()[0]
+
+    def huella(self) -> str:
+        """Huella del contenido EXHIBIDO. Es lo que hace acreditable la bitacora.
+
+        Sin esto no se puede demostrar que cifra vio una persona un dia dado,
+        porque la Boveda se actualiza y el objeto se sobreescribe. Con esto, la
+        bitacora guarda la huella de lo mostrado y cualquier cambio posterior es
+        detectable.
+        """
+        partes = [self.id(), self.enunciado, str(self.magnitud or ""),
+                  self.veredicto, f"{self.confianza:.4f}", str(self.version)]
+        return hashlib.sha256("::".join(partes).encode("utf-8")).hexdigest()[:24]
+
+    def registrar(self, momento: str, evento: str, detalle: str = "") -> dict:
+        """Agrega una entrada a la bitacora. Append-only: nunca reescribe.
+
+        `momento` se recibe como parametro y no se lee del reloj, para que la
+        bitacora sea reproducible en pruebas y para que el llamador sea el
+        responsable de la marca de tiempo.
+        """
+        entrada = {
+            "momento": momento, "evento": evento, "detalle": detalle,
+            "version": self.version, "veredicto": self.veredicto,
+            "confianza": round(self.confianza, 4),
+            "magnitud": str(self.magnitud) if self.magnitud else None,
+            "huella": self.huella(),
+        }
+        self.historial.append(entrada)
+        return entrada
+
+    def exhibir(self, momento: str, destinatario: str = "") -> Optional[dict]:
+        """Registra una exhibicion y devuelve el acta, o None si no es mostrable.
+
+        Es el unico camino por el que un hecho debe llegar a un estudiante. Pasa
+        por mostrable() y deja constancia, de modo que la pregunta "que vio esta
+        persona ese dia" tenga una respuesta y no una reconstruccion.
+        """
+        ok, motivo = self.mostrable()
+        if not ok:
+            self.registrar(momento, "exhibicion_bloqueada", motivo)
+            return None
+        return self.registrar(momento, "exhibido", destinatario)
 
     def dict(self) -> dict:
         d = asdict(self)
@@ -198,11 +283,15 @@ class Hecho:
         d["magnitud"] = self.magnitud.dict() if self.magnitud else None
         d["anclas"] = [a.dict() for a in self.anclas]
         d["techo"] = self.techo()
-        d["mostrable"] = self.mostrable()
+        ok, motivo = self.mostrable()
+        d["mostrable"] = ok
+        d["motivo_no_mostrable"] = motivo
+        d["huella"] = self.huella()
         return d
 
     def json(self) -> str:
         return json.dumps(self.dict(), ensure_ascii=False, indent=2)
 
 
-__all__ = ["Hecho", "Ancla", "Poblacion", "ClaseHecho", "TipoAncla", "TECHO_POR_ANCLA"]
+__all__ = ["Hecho", "Ancla", "Poblacion", "ClaseHecho", "TipoAncla", "TECHO_POR_ANCLA",
+           "CLASES_CLINICAS_CRITICAS", "PISO_CONFIANZA"]

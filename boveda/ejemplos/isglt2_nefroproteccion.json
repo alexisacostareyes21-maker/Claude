@@ -125,6 +125,7 @@
     },
     "version": 1,
     "vigente": true,
+    "historial": [],
     "revisar_si": [
       "aparece un ensayo de fase 3 con desenlace renal en esta poblacion",
       "cambia la etiqueta del regulador",
@@ -134,7 +135,9 @@
     "reemplaza": "",
     "id": "H7ac21c76830c7ad7",
     "techo": "VERDE",
-    "mostrable": true
+    "mostrable": true,
+    "motivo_no_mostrable": "",
+    "huella": "fb870b96a1c55595b3ec1d17"
   },
   "grafo": {
     "nodos": [

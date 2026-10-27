@@ -208,12 +208,130 @@ def test_id_estable_e_independiente_de_redaccion():
     ok(a.id() != c.id(), "cambiar la poblacion cambia el hecho")
 
 
-def test_mostrable():
+def test_mostrable_por_veredicto():
     h = hecho_base(p1("HR 0.61"))
+    h.confianza = 0.8
     for v, esperado in [("VERDE", True), ("AMBAR", True), ("ROJO", False),
                         ("NEGRO", False), ("GRIS", False)]:
         h.veredicto = v
-        ok(h.mostrable() is esperado, f"{v} mostrable debe ser {esperado}")
+        ok(h.se_muestra() is esperado, f"{v} mostrable debe ser {esperado}")
+
+
+def test_piso_de_confianza_solo_aplica_a_ambar():
+    """Un AMBAR con confianza 0.31 es una cifra que el sistema casi no cree, y
+    aun asi entraba al mazo de repeticion espaciada, cuyo proposito es que el
+    estudiante la retenga. Pero el piso NO debe aplicar a VERDE: un VERDE ya
+    paso las compuertas duras, y exigirle confianza minima seria contar dos
+    veces lo mismo."""
+    h = hecho_base(p1("HR 0.61"))
+    h.veredicto = "AMBAR"
+    h.confianza = 0.31
+    ok(not h.se_muestra(), "un AMBAR por debajo del piso no se muestra")
+    ok("piso" in h.mostrable()[1], f"debe decir el motivo: {h.mostrable()[1]}")
+    h.confianza = 0.55
+    ok(h.se_muestra(), "un AMBAR por encima del piso si se muestra")
+
+    h.veredicto = "VERDE"
+    h.confianza = 0.30
+    ok(h.se_muestra(),
+       "un VERDE se muestra aunque su confianza sea baja: ya tiene ancla verificada, "
+       "consenso y tres encuadres, y la confianza solo gradua dentro de lo publicable")
+
+
+def test_clase_clinica_critica_exige_ancla():
+    """Para una cifra que se traduce en conducta no existe el modo no anclado."""
+    from harness.numeros import Clase, Magnitud
+    for clase in (Clase.DOSIS, Clase.CONCENTRACION, Clase.PRESION, Clase.TFG):
+        h = hecho_base(Magnitud(clase, 10, "mg" if clase is Clase.DOSIS else None))
+        h.veredicto = "AMBAR"
+        h.confianza = 0.9
+        ok(not h.se_muestra(),
+           f"un AMBAR de clase {clase.value} no debe exhibirse: {h.mostrable()}")
+        ok("critica" in h.mostrable()[1], f"motivo: {h.mostrable()[1]}")
+        h.veredicto = "VERDE"
+        ok(h.se_muestra(), f"con ancla verificada (VERDE) si: {clase.value}")
+
+    # una razon de riesgo NO es clase critica: un AMBAR etiquetado es aceptable
+    h = hecho_base(p1("HR 0.61"))
+    h.veredicto = "AMBAR"
+    h.confianza = 0.7
+    ok(h.se_muestra(), "un tamano de efecto si admite el modo no anclado")
+
+
+def test_bitacora_es_append_only():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    aplicar(h, elic, momento="2026-10-27T10:00:00Z")
+    ok(len(h.historial) == 1, f"debe quedar la entrada: {h.historial}")
+    ok(h.historial[0]["evento"] == "atestiguado", f"evento: {h.historial[0]}")
+    ok(h.historial[0]["huella"], "debe guardar la huella del contenido")
+
+    huella_1 = h.huella()
+    aplicar(h, elic, momento="2026-10-28T10:00:00Z")
+    ok(len(h.historial) == 2, "una segunda atestiguacion agrega, no reemplaza")
+    ok(h.historial[0]["momento"] == "2026-10-27T10:00:00Z",
+       "la entrada vieja no se reescribe")
+
+    # si cambia el contenido, cambia la huella y es detectable
+    h.magnitud = p1("HR 0.39")
+    ok(h.huella() != huella_1, "un cambio de cifra debe cambiar la huella")
+
+
+def test_exhibir_deja_acta_y_bloquea():
+    h = hecho_base(p1("HR 0.61"))
+    h.veredicto = "VERDE"
+    h.confianza = 0.8
+    acta = h.exhibir("2026-10-27T10:00:00Z", "estudiante-123")
+    ok(acta is not None, "debe devolver el acta de exhibicion")
+    ok(acta["evento"] == "exhibido" and acta["detalle"] == "estudiante-123",
+       f"el acta debe decir a quien: {acta}")
+    ok(acta["huella"] == h.huella(), "el acta fija la huella de lo mostrado")
+
+    h.veredicto = "ROJO"
+    ok(h.exhibir("2026-10-27T11:00:00Z") is None, "un ROJO no se exhibe")
+    ok(h.historial[-1]["evento"] == "exhibicion_bloqueada",
+       f"el bloqueo tambien queda en bitacora: {h.historial[-1]}")
+
+
+def test_dosis_factor_dos_es_rojo():
+    """El bug que encontro el analisis adversarial: con el umbral fijo en factor
+    10, una dosis doble pasaba como imprecision."""
+    from harness.numeros import Clase
+    h = hecho_base(clase=ClaseHecho.DOSIS)
+    elic = [
+        Elicitacion(p1("10 mg al dia"), Encuadre.DIRECTO, certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("10 mg una vez al dia"), Encuadre.DESDE_FUENTE,
+                    certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("10 mg diarios"), Encuadre.SIN_OPCIONES,
+                    certeza=Certeza.RECUERDO_EXACTO),
+        Elicitacion(p1("20 mg al dia"), Encuadre.DESDE_ENSAYO,
+                    certeza=Certeza.RECUERDO_EXACTO),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.ROJO,
+       f"una dosis doble debe ir a revision, no promediarse: {r.veredicto}")
+    ok("ORDEN_DE_MAGNITUD" in r.alertas, f"alerta faltante: {r.alertas}")
+    ok("1.6" in " ".join(r.motivos) or "factor" in " ".join(r.motivos),
+       f"el motivo debe citar el factor por clase: {r.motivos}")
+
+
+def test_razon_de_riesgo_conserva_tolerancia_amplia():
+    """Lo contrario tambien importa: 0.61 y 0.62 son la misma conclusion."""
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO, "HR 0.61"),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,62"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.VERDE,
+       f"0.61 y 0.62 no deben romper el consenso: {r.veredicto} / {r.motivos}")
 
 
 def test_cola_de_revision_prioriza_riesgo():
@@ -247,6 +365,7 @@ def test_aplicar_escribe_en_el_hecho():
     d = h.dict()
     ok(d["id"].startswith("H"), "el dict debe traer el id")
     ok(d["mostrable"] is True, "el dict debe traer mostrable")
+    ok(d["huella"], "el dict debe traer la huella")
 
 
 # ------------------------------------------------- senales ademas del consenso

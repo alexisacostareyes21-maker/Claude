@@ -196,7 +196,7 @@ def test_abstencion_total_es_gris():
     c = m.curar(OBJ, plantilla(), clase_sugerida=Clase.RAZON_RIESGO)
     ok(c.reporte.veredicto is Veredicto.GRIS,
        f"si el modelo no sabe nada, el hecho es GRIS: {c.reporte.veredicto}")
-    ok(not c.hecho.mostrable(), "un GRIS no se muestra al estudiante")
+    ok(not c.hecho.se_muestra(), "un GRIS no se muestra al estudiante")
 
 
 def test_presupuesto_corta():

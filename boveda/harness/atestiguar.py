@@ -39,7 +39,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Sequence
 
-from .numeros import Acuerdo, Clase, Magnitud, agrupar, comparar, orden_de_magnitud_distinto
+from .numeros import (
+    Acuerdo, Clase, Magnitud, agrupar, comparar, factor_de_alarma,
+    orden_de_magnitud_distinto,
+)
 from .hecho import Hecho, TipoAncla
 
 
@@ -174,6 +177,21 @@ TOL_DEFECTO = 0.02
 # Clases donde un error no es un dato mal puesto sino una conducta peligrosa.
 CLASES_CRITICAS = {Clase.DOSIS, Clase.PRESION, Clase.TFG, Clase.CONCENTRACION}
 
+# Tolerancia de acuerdo POR CLASE. Una razon de riesgo de 0.61 y una de 0.62 son
+# la misma conclusion clinica; una dosis de 10 mg y una de 10.5 mg no
+# necesariamente, y 10 frente a 20 desde luego que no. Usar una sola tolerancia
+# para todo trataba una sobredosis como un redondeo.
+TOL_POR_CLASE = {
+    Clase.DOSIS: 0.001,
+    Clase.CONCENTRACION: 0.005,
+    Clase.PRESION: 0.005,
+    Clase.TFG: 0.005,
+}
+
+
+def tolerancia(clase, defecto: float = TOL_DEFECTO) -> float:
+    return TOL_POR_CLASE.get(clase, defecto)
+
 
 def atestiguar(
     hecho: Hecho,
@@ -202,6 +220,8 @@ def atestiguar(
     ancla_fuerte = hecho.ancla_mas_fuerte()
     nombre_ancla = ancla_fuerte.tipo.value if ancla_fuerte else None
 
+    if mags:
+        tol = min(tol, tolerancia(mags[0].clase))
     grupos = agrupar(mags, tol) if mags else []
     dominante = grupos[0] if grupos else []
     cuota = len(dominante) / len(mags) if mags else 0.0
@@ -241,12 +261,15 @@ def atestiguar(
                     alertas.append("ORDEN_DE_MAGNITUD")
                 return rep(Veredicto.NEGRO, 0.0)
 
-    # ---- Regla 2: error de orden de magnitud entre elicitaciones en clase critica.
+    # ---- Regla 2: discrepancia de categoria entre elicitaciones en clase critica.
+    # El factor sale de la clase, no de una constante: en una dosis, un factor 2
+    # es una sobredosis y no una imprecision.
     if consenso is not None and consenso.clase in CLASES_CRITICAS:
+        f_alarma = factor_de_alarma(consenso.clase)
         for m in mags:
-            if orden_de_magnitud_distinto(consenso, m):
+            if orden_de_magnitud_distinto(consenso, m, f_alarma):
                 motivos.append(
-                    f"discrepancia de un orden de magnitud en una clase critica "
+                    f"discrepancia de factor {f_alarma:g} o mas en una clase critica "
                     f"({consenso.clase.value}): {consenso} frente a {m}"
                 )
                 alertas.append("ORDEN_DE_MAGNITUD")
@@ -414,14 +437,27 @@ def _confianza(cuota: float, n_enc: int, n: int,
 
 
 def aplicar(hecho: Hecho, elicitaciones: Sequence[Elicitacion],
-            sondas: Sequence[SondaFalsa] = (), tol: float = TOL_DEFECTO) -> Hecho:
-    """Atestigua y escribe el resultado en el hecho. Devuelve el mismo objeto."""
+            sondas: Sequence[SondaFalsa] = (), tol: float = TOL_DEFECTO,
+            momento: str = "") -> Hecho:
+    """Atestigua, escribe el resultado en el hecho y deja constancia.
+
+    La version anterior sobreescribia veredicto y confianza en el mismo objeto
+    sin dejar rastro. Eso hacia imposible responder "que cifra, con que
+    veredicto, estaba publicada el dia tal": la Boveda se actualiza y el objeto
+    es el mismo. Si algun dia hay que acreditar lo que una persona vio, la
+    reconstruccion no sirve y la bitacora si. El registro es append-only.
+    """
+    previo = (hecho.veredicto, round(hecho.confianza, 4))
     r = atestiguar(hecho, elicitaciones, sondas, tol)
     hecho.veredicto = r.veredicto.value
     hecho.confianza = r.confianza
     hecho.diagnostico = r.dict()
     if r.magnitud_consenso is not None and hecho.magnitud is None:
         hecho.magnitud = r.magnitud_consenso
+    if momento:
+        detalle = (f"de {previo[0]}/{previo[1]} a {hecho.veredicto}/"
+                   f"{round(hecho.confianza, 4)}")
+        hecho.registrar(momento, "atestiguado", detalle)
     return hecho
 
 
@@ -447,6 +483,6 @@ def cola_de_revision(hechos: Sequence[Hecho]) -> list[Hecho]:
 __all__ = [
     "Encuadre", "Veredicto", "Elicitacion", "SondaFalsa", "Reporte",
     "Certeza", "Procedencia",
-    "atestiguar", "aplicar", "cola_de_revision",
+    "atestiguar", "aplicar", "cola_de_revision", "tolerancia", "TOL_POR_CLASE",
     "MIN_ELICITACIONES", "MIN_ENCUADRES", "CUOTA_CONSENSO_VERDE",
 ]
