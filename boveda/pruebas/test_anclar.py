@@ -233,17 +233,57 @@ def test_numero_de_seccion_no_es_una_cifra_clinica():
     from harness.anclar import _oraciones
     frases = _oraciones("2.1 Recommended Dosage. The recommended dosage is 10 mg "
                         "orally once daily. 8.6 Renal Impairment. No adjustment.")
-    ok(not any(f.startswith("2.1") or f.startswith("8.6") for f, _ in frases),
-       f"el numero de seccion debe quedar fuera de la oracion: {[f[:30] for f, _ in frases]}")
-    ok(all(o >= 0 for _, o in frases), "los desplazamientos deben ser validos")
+    ok(not any(f.startswith("2.1") or f.startswith("8.6") for f, _, _ in frases),
+       f"el numero de seccion debe quedar fuera de la oracion: {[f[:30] for f, _, _ in frases]}")
+    ok(all(o >= 0 for _, o, _ in frases), "los desplazamientos deben ser validos")
+
+    # pero NO debe descartarse: la subseccion se arrastra como contexto
+    secciones = [sec for _, _, sec in frases]
+    ok("2.1" in secciones, f"la subseccion 2.1 debe quedar registrada: {secciones}")
+    ok("8.6" in secciones, f"la subseccion 8.6 debe quedar registrada: {secciones}")
+    ok(secciones[1] == "2.1",
+       f"la subseccion se arrastra a la oracion siguiente, que no la repite: {secciones}")
 
     mags = []
-    for f, _ in frases:
+    for f, _, _ in frases:
         mags += parsear(f, clase_sugerida=Clase.DOSIS)
     valores = sorted({m.valor for m in mags})
     ok(2.1 not in valores and 8.6 not in valores,
        f"ninguna dosis debe salir de la numeracion de seccion: {valores}")
     ok(10 in valores, f"la dosis real si debe parsearse: {valores}")
+
+
+def test_subseccion_es_restriccion_dura():
+    """La estructura del formato PLR esta impuesta por regulacion, no inferida.
+    Una cifra fuera de su subseccion no es el dato buscado."""
+    from harness.anclar import seccion_admisible
+    ok(seccion_admisible("8.6", "ajuste_renal"), "8.6 es la seccion renal")
+    ok(seccion_admisible("8.6.1", "ajuste_renal"), "una subseccion hija cuenta")
+    ok(seccion_admisible("8", "ajuste_renal"), "la seccion padre cuenta")
+    ok(not seccion_admisible("7", "ajuste_renal"),
+       "la seccion de interacciones NO puede contener un corte renal")
+    ok(not seccion_admisible("12.1", "dosis"),
+       "el mecanismo de accion no es donde vive una dosis")
+    ok(seccion_admisible("12.1", "mecanismo"), "12.1 si es el mecanismo")
+    ok(seccion_admisible("", "dosis"),
+       "sin subseccion identificada no se rechaza: la ausencia de estructura no es "
+       "prueba de que la cifra este fuera de lugar")
+
+
+def test_cifra_en_subseccion_equivocada_se_descarta():
+    doc = {"results": [{
+        "openfda": {"spl_set_id": ["x"]},
+        # el corte renal real vive en 8.6; el 60 de la seccion 7 es otra cosa
+        "use_in_specific_populations": [
+            "7 Drug Interactions. Coadministration increased exposure by 60 percent. "
+            "8.6 Renal Impairment. No adjustment is needed if the eGFR is 30 mL/min or greater."
+        ],
+    }]}
+    f = FetcherOffline({"farmaco-x": doc})
+    r = anclar_en_etiqueta("farmaco-x", Magnitud(Clase.TFG, 30, "ml/min/1.73m2"), f,
+                           tipo_hecho="ajuste_renal")
+    ok(r.ancla.verificada, f"debe anclar el corte que SI esta en 8.6: {r.motivo}")
+    ok("PLR 8.6" in r.ruta, f"la ruta debe registrar la subseccion: {r.ruta}")
 
 
 def test_varias_magnitudes_sin_pista_no_se_resuelve():

@@ -73,6 +73,24 @@ CAMPOS_ETIQUETA = {
     "interaccion": ["drug_interactions"],
 }
 
+# Subsecciones del formato PLR (21 CFR 201.57) donde puede vivir legitimamente
+# cada tipo de cifra. No es una pista de recuperacion: es una restriccion.
+#
+# La estructura de una etiqueta de la FDA no hay que inferirla como una tabla de
+# contenidos: esta impuesta por regulacion y es estable. Por eso una cifra
+# hallada fuera de su subseccion esperada no merece menos confianza, merece
+# rechazo: un corte de eGFR que aparece en la seccion de interacciones no es un
+# corte de eGFR mal clasificado, es otra cosa.
+SUBSECCIONES_ESPERADAS = {
+    "dosis": {"2", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "3"},
+    "ajuste_renal": {"2.2", "2.3", "2.4", "8.6", "8", "2"},
+    "ajuste_hepatico": {"2.2", "2.3", "2.4", "8.7", "8", "2"},
+    "contraindicacion": {"4", "5"},
+    "mecanismo": {"12.1", "12"},
+    "farmacocinetica": {"12.3", "12"},
+    "interaccion": {"7"},
+}
+
 # paramType de ClinicalTrials.gov -> clase de magnitud de la Boveda
 PARAM_A_CLASE = {
     "hazard ratio": Clase.RAZON_RIESGO,
@@ -368,23 +386,37 @@ def anclar_en_etiqueta(generico: str, magnitud: Magnitud, fetcher: Fetcher,
     halladas: list[Magnitud] = []
     clave = (pista or "").lower().strip()
 
+    fuera_de_seccion: list[str] = []
     for campo in campos:
         for k, bloque in enumerate(etiqueta.get(campo) or []):
-            for frase, inicio in _oraciones(bloque):
+            for frase, inicio, seccion in _oraciones(bloque):
                 if clave and clave not in frase.lower():
                     continue
+                admisible = seccion_admisible(seccion, tipo_hecho)
                 for cand in parsear(frase, clase_sugerida=magnitud.clase):
-                    candidatos.append({"campo": f"{campo}[{k}]", "offset": inicio,
+                    marca = f"{campo}[{k}]" + (f" seccion {seccion}" if seccion else "")
+                    candidatos.append({"campo": marca, "offset": inicio,
+                                       "seccion": seccion, "admisible": admisible,
                                        "magnitud": str(cand),
                                        "frase": _recorte(frase, 25)})
+                    if not admisible:
+                        # Restriccion dura, no penalizacion: una cifra en la
+                        # subseccion equivocada no es el dato buscado.
+                        fuera_de_seccion.append(
+                            f"{cand} en la subseccion {seccion}, que no corresponde a "
+                            f"'{tipo_hecho}' (esperadas: "
+                            f"{sorted(SUBSECCIONES_ESPERADAS.get(tipo_hecho, []))})")
+                        continue
                     if cand.clase is magnitud.clase:
-                        halladas.append((cand, f"results[0].{campo}[{k}] offset {inicio}",
-                                         frase))
+                        ruta = (f"results[0].{campo}[{k}] offset {inicio}"
+                                + (f" PLR {seccion}" if seccion else ""))
+                        halladas.append((cand, ruta, frase))
                     ac = comparar(cand, magnitud, tol)
                     if ac in (Acuerdo.IDENTICO, Acuerdo.EQUIVALENTE, Acuerdo.COMPATIBLE):
                         a = _ancla_etiqueta(generico, spl, cand, True)
                         a.cita_corta = _recorte(frase, 20)
-                        ruta = f"results[0].{campo}[{k}] offset {inicio}"
+                        ruta = (f"results[0].{campo}[{k}] offset {inicio}"
+                                + (f" PLR {seccion}" if seccion else ""))
                         return ResultadoAnclaje(ancla=a, coincide=ac, ruta=ruta,
                                                 encontrado=cand, candidatos=candidatos,
                                                 motivo=f"coincide ({ac.value}) en {ruta}")
@@ -416,12 +448,17 @@ def anclar_en_etiqueta(generico: str, magnitud: Magnitud, fetcher: Fetcher,
                     f"se verifica con el valor de la etiqueta y la afirmacion queda "
                     f"contradicha"),
         )
+    extra = ""
+    if fuera_de_seccion:
+        extra = (f". Se descartaron {len(fuera_de_seccion)} cifras por estar en una "
+                 f"subseccion que no corresponde: {fuera_de_seccion[:3]}")
     return ResultadoAnclaje(
         ancla=_ancla_etiqueta(generico, spl, magnitud, False),
         coincide=None, candidatos=candidatos,
-        motivo=(f"se parsearon {len(candidatos)} magnitudes en las secciones {campos} "
-                f"pero ninguna de clase {magnitud.clase.value}" if candidatos else
-                f"no se parseo ninguna magnitud de clase {magnitud.clase.value} en {campos}"),
+        motivo=((f"se parsearon {len(candidatos)} magnitudes en las secciones {campos} "
+                 f"pero ninguna admisible de clase {magnitud.clase.value}" if candidatos else
+                 f"no se parseo ninguna magnitud de clase {magnitud.clase.value} en {campos}")
+                + extra),
     )
 
 
@@ -451,29 +488,57 @@ def urllib_quote(s: str) -> str:
 # estructuradas las etiquetas de la FDA.
 _FIN_ORACION = re.compile(r"(?<=[.;:])\s+(?=[A-Z(])|(?<=[.;:])\s+(?=\d+\.\d+\s+[A-Z])")
 
-# Numero de seccion al inicio de una oracion. Hay que quitarlo antes de parsear:
-# "2.1 Recommended Dosage" se leeria como una dosis de 2.1 mg, que es exactamente
-# el tipo de cifra fantasma que envenena una boveda.
-_NUM_SECCION = re.compile(r"^\d{1,2}(?:\.\d{1,2}){0,2}\s+(?=[A-Z])")
+# Numero de seccion al inicio de una oracion. Hay que quitarlo antes de parsear
+# ("2.1 Recommended Dosage" se leeria como una dosis de 2.1 mg), pero NO hay que
+# descartarlo: el numero dice que significa la cifra que viene despues, y tirarlo
+# es tirar la senal mas fiable del documento.
+_NUM_SECCION = re.compile(r"^(\d{1,2}(?:\.\d{1,2}){0,2})\s+(?=[A-Z])")
 
 
-def _oraciones(texto: str) -> list[tuple[str, int]]:
-    """Parte un bloque de prosa en oraciones con su desplazamiento.
+def _oraciones(texto: str) -> list[tuple[str, int, str]]:
+    """Parte un bloque de prosa en oraciones, con su desplazamiento y su subseccion.
 
-    El desplazamiento importa: es lo que permite senalar el lugar exacto del
-    documento donde se leyo la cifra, y por tanto re-verificarla. Se calcula
-    sobre el texto ORIGINAL, no sobre el limpiado, para que siga apuntando al
-    documento real.
+    Tres cosas por oracion:
+      - el texto, ya sin el numero de seccion que lo encabeza
+      - el desplazamiento en el texto ORIGINAL, para poder re-verificar
+      - la subseccion PLR vigente, que se ARRASTRA hacia adelante
+
+    El arrastre es la parte que importa. En una etiqueta, el encabezado "8.6
+    Renal Impairment" aparece una vez y las cifras vienen en las oraciones
+    siguientes, que ya no lo repiten. Sin arrastrar el contexto estructural, una
+    cifra queda huerfana y no se puede saber que significa.
     """
-    out: list[tuple[str, int]] = []
+    out: list[tuple[str, int, str]] = []
     pos = 0
+    seccion = ""
     for trozo in _FIN_ORACION.split(texto or ""):
         if trozo and trozo.strip():
-            limpio = _NUM_SECCION.sub("", trozo.strip())
+            crudo = trozo.strip()
+            m = _NUM_SECCION.match(crudo)
+            if m:
+                seccion = m.group(1)
+                crudo = crudo[m.end():]
             desplazamiento = pos + (len(trozo) - len(trozo.lstrip()))
-            out.append((limpio, desplazamiento))
+            out.append((crudo, desplazamiento, seccion))
         pos += len(trozo or "") + 1
     return out
+
+
+def seccion_admisible(seccion: str, tipo_hecho: str) -> bool:
+    """True si esa subseccion puede contener legitimamente ese tipo de cifra.
+
+    Sin subseccion identificada devuelve True: la ausencia de estructura no es
+    prueba de que la cifra este fuera de lugar, y rechazar por eso perderia las
+    etiquetas que no vienen numeradas.
+    """
+    esperadas = SUBSECCIONES_ESPERADAS.get(tipo_hecho)
+    if not esperadas or not seccion:
+        return True
+    if seccion in esperadas:
+        return True
+    # "8.6.1" cuenta como dentro de "8.6"; "8" como padre de "8.6"
+    return any(seccion.startswith(e + ".") or e.startswith(seccion + ".")
+               for e in esperadas)
 
 
 def _recorte(texto: str, palabras: int) -> str:
@@ -532,4 +597,5 @@ __all__ = [
     "Fetcher", "FetcherHTTP", "FetcherOffline", "AnclajeImposible",
     "ResultadoAnclaje", "anclar_en_ensayo", "anclar_en_etiqueta",
     "necesita_refresco", "aplicar_anclaje", "CAMPOS_ETIQUETA", "PARAM_A_CLASE",
+    "SUBSECCIONES_ESPERADAS", "seccion_admisible",
 ]
