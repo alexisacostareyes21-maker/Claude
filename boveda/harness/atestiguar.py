@@ -66,6 +66,41 @@ class Veredicto(str, Enum):
     GRIS = "GRIS"          # evidencia insuficiente para decidir
 
 
+class Certeza(str, Enum):
+    """Lo que el modelo dice sobre su propio acceso al dato.
+
+    Es la unica forma de autoinforme que el motor usa, y solo para rebajar, nunca
+    para acreditar: una elicitacion marcada como inferencia no puede sostener un
+    VERDE por si sola, aunque coincida con las demas.
+    """
+
+    RECUERDO_EXACTO = "recuerdo_exacto"
+    RECUERDO_APROXIMADO = "recuerdo_aproximado"
+    INFERENCIA = "inferencia"
+    NO_LO_SE = "no_lo_se"
+
+
+@dataclass
+class Procedencia:
+    """De donde dice el modelo que viene la cifra.
+
+    Sirve para un control que el consenso numerico no da: cuando varias
+    elicitaciones coinciden en el NUMERO pero nombran estudios distintos, el
+    acuerdo es sospechoso. Una cifra bien recordada arrastra su estudio; una
+    confabulada arrastra una procedencia que cambia entre intentos.
+    """
+
+    estudio: str = ""
+    ano: str = ""
+    n: str = ""
+    poblacion: str = ""
+    desenlace: str = ""
+    registro: str = ""
+
+    def clave(self) -> str:
+        return (self.registro or self.estudio or "").lower().strip()
+
+
 @dataclass
 class Elicitacion:
     """Una respuesta del modelo sobre la cifra, con el camino por el que se pidio."""
@@ -75,6 +110,10 @@ class Elicitacion:
     modelo: str = ""
     texto_bruto: str = ""
     confianza_declarada: Optional[float] = None  # se registra, no se usa para decidir
+    certeza: Certeza = Certeza.RECUERDO_APROXIMADO
+    procedencia: Optional[Procedencia] = None
+    abstuvo: bool = False        # el modelo respondio no_se, que es dato valido
+    signo_mecanismo: int = 0     # del encuadre DESDE_MECANISMO: -1, 0 o +1
 
 
 @dataclass
@@ -101,6 +140,7 @@ class Reporte:
     n_elicitaciones: int
     n_encuadres: int
     cuota_consenso: float
+    tasa_abstencion: float
     anclas_verificadas: int
     ancla_mas_fuerte: Optional[str]
     motivos: list[str] = field(default_factory=list)
@@ -115,6 +155,7 @@ class Reporte:
             "n_elicitaciones": self.n_elicitaciones,
             "n_encuadres": self.n_encuadres,
             "cuota_consenso": round(self.cuota_consenso, 3),
+            "tasa_abstencion": round(self.tasa_abstencion, 3),
             "anclas_verificadas": self.anclas_verificadas,
             "ancla_mas_fuerte": self.ancla_mas_fuerte,
             "motivos": self.motivos,
@@ -149,10 +190,13 @@ def atestiguar(
     motivos: list[str] = []
     alertas: list[str] = []
 
-    validas = [e for e in elicitaciones if e.magnitud is not None]
+    validas = [e for e in elicitaciones if e.magnitud is not None and not e.abstuvo]
+    abstenciones = [e for e in elicitaciones if e.abstuvo]
     mags = [e.magnitud for e in validas]
     encuadres = {e.encuadre for e in validas}
     n_enc = len(encuadres)
+    intentos = len(validas) + len(abstenciones)
+    tasa_abstencion = len(abstenciones) / intentos if intentos else 0.0
 
     anclas_ver = [a for a in hecho.anclas if a.verificada and a.magnitud is not None]
     ancla_fuerte = hecho.ancla_mas_fuerte()
@@ -167,6 +211,7 @@ def atestiguar(
         return Reporte(
             veredicto=v, confianza=conf, magnitud_consenso=consenso,
             n_elicitaciones=len(validas), n_encuadres=n_enc, cuota_consenso=cuota,
+            tasa_abstencion=tasa_abstencion,
             anclas_verificadas=len(anclas_ver), ancla_mas_fuerte=nombre_ancla,
             motivos=motivos, alertas=alertas,
             grupos=[[str(m) for m in g] for g in grupos],
@@ -231,18 +276,63 @@ def atestiguar(
         return rep(Veredicto.ROJO, cuota * 0.3)
 
     # ---- Regla 5: fallo correlacionado por falta de diversidad de encuadre.
-    techo_por_encuadre = n_enc >= MIN_ENCUADRES
-    if not techo_por_encuadre:
+    apto_verde = n_enc >= MIN_ENCUADRES
+    if not apto_verde:
         alertas.append("ENCUADRE_UNICO")
         motivos.append(
             f"solo {n_enc} encuadre(s) distinto(s) (minimo {MIN_ENCUADRES}): el consenso "
             f"puede ser fallo correlacionado, no convergencia"
         )
 
+    # ---- Regla 5b: el modelo se abstuvo mas veces de las que respondio.
+    if tasa_abstencion >= 0.5 and intentos >= MIN_ELICITACIONES:
+        apto_verde = False
+        alertas.append("ABSTENCION_ALTA")
+        motivos.append(
+            f"el modelo se abstuvo en {len(abstenciones)}/{intentos} encuadres: el acuerdo "
+            f"de los que si respondieron no compensa que la mayoria no tenga el dato"
+        )
+
+    # ---- Regla 5c: el acuerdo es solo entre inferencias, no entre recuerdos.
+    dominantes_e = [e for e in validas if e.magnitud in dominante]
+    if dominantes_e and not any(
+        e.certeza in (Certeza.RECUERDO_EXACTO, Certeza.RECUERDO_APROXIMADO)
+        for e in dominantes_e
+    ):
+        apto_verde = False
+        alertas.append("SOLO_INFERENCIA")
+        motivos.append(
+            "ninguna elicitacion del grupo dominante declara recordar el dato: el consenso "
+            "es entre inferencias, que pueden compartir el mismo razonamiento equivocado"
+        )
+
+    # ---- Regla 5d: coinciden en el numero pero no en de donde sale.
+    procs = {e.procedencia.clave() for e in dominantes_e
+             if e.procedencia and e.procedencia.clave()}
+    if len(procs) > 1:
+        apto_verde = False
+        alertas.append("PROCEDENCIA_INCOHERENTE")
+        motivos.append(
+            f"el grupo dominante coincide en la cifra pero la atribuye a fuentes distintas "
+            f"({', '.join(sorted(procs))}): un numero bien recordado arrastra su estudio"
+        )
+
+    # ---- Regla 5e: la fisiologia apunta al lado contrario que la cifra.
+    signos_mec = {e.signo_mecanismo for e in elicitaciones if e.signo_mecanismo}
+    if consenso is not None and signos_mec:
+        signo_cifra = _signo_de_cifra(consenso)
+        if signo_cifra and all(s == -signo_cifra for s in signos_mec):
+            alertas.append("MECANISMO_OPUESTO")
+            motivos.append(
+                f"el encuadre de mecanismo predice signo {list(signos_mec)[0]:+d} y la cifra "
+                f"implica {signo_cifra:+d}: o la cifra esta mal o la cadena causal lo esta"
+            )
+            return rep(Veredicto.ROJO, 0.0)
+
     # ---- Regla 6: acreditacion.
     conf = _confianza(cuota, n_enc, len(mags), anclas_ver, consenso)
 
-    if anclas_ver and cuota >= CUOTA_CONSENSO_VERDE and techo_por_encuadre:
+    if anclas_ver and cuota >= CUOTA_CONSENSO_VERDE and apto_verde:
         techo = hecho.techo()
         if techo == "VERDE":
             motivos.append(
@@ -257,6 +347,19 @@ def atestiguar(
         motivos.append("consenso sin ancla verificada: se muestra como no anclado")
         alertas.append("SIN_ANCLA")
     return rep(Veredicto.AMBAR, conf * 0.7)
+
+
+def _signo_de_cifra(m: Magnitud) -> int:
+    """Direccion del efecto que implica una magnitud, o 0 si no implica ninguna."""
+    if m.clase is Clase.RAZON_RIESGO:
+        if m.valor < 0.97:
+            return -1
+        if m.valor > 1.03:
+            return 1
+        return 0
+    if m.clase in (Clase.REDUCCION_REL, Clase.REDUCCION_ABS):
+        return -1 if m.valor > 0 else 0
+    return 0
 
 
 def _representante(grupo: list[Magnitud]) -> Magnitud:
@@ -343,6 +446,7 @@ def cola_de_revision(hechos: Sequence[Hecho]) -> list[Hecho]:
 
 __all__ = [
     "Encuadre", "Veredicto", "Elicitacion", "SondaFalsa", "Reporte",
+    "Certeza", "Procedencia",
     "atestiguar", "aplicar", "cola_de_revision",
     "MIN_ELICITACIONES", "MIN_ENCUADRES", "CUOTA_CONSENSO_VERDE",
 ]

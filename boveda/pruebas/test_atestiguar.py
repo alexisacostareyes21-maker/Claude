@@ -7,7 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from harness.numeros import Clase, Magnitud, parsear
 from harness.hecho import Ancla, ClaseHecho, Hecho, Poblacion, TipoAncla
 from harness.atestiguar import (
-    Elicitacion, Encuadre, SondaFalsa, Veredicto, atestiguar, cola_de_revision, aplicar,
+    Certeza, Elicitacion, Encuadre, Procedencia, SondaFalsa, Veredicto,
+    atestiguar, cola_de_revision, aplicar,
 )
 
 FALLOS, PASES = [], 0
@@ -246,6 +247,120 @@ def test_aplicar_escribe_en_el_hecho():
     d = h.dict()
     ok(d["id"].startswith("H"), "el dict debe traer el id")
     ok(d["mostrable"] is True, "el dict debe traer mostrable")
+
+
+# ------------------------------------------------- senales ademas del consenso
+def _elic_ok(enc, mag="HR 0.61", certeza=Certeza.RECUERDO_EXACTO, proc="DAPA-CKD"):
+    return Elicitacion(p1(mag), enc, "m", certeza=certeza,
+                       procedencia=Procedencia(estudio=proc, registro=""))
+
+
+def test_abstencion_alta_impide_verde():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+        Elicitacion(None, Encuadre.SIN_OPCIONES, "m", abstuvo=True),
+        Elicitacion(None, Encuadre.DESDE_MECANISMO, "m", abstuvo=True),
+        Elicitacion(None, Encuadre.DESDE_FUENTE, "m", abstuvo=True),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.AMBAR,
+       f"si el modelo se abstiene mas de lo que responde, no hay VERDE: {r.veredicto}")
+    ok("ABSTENCION_ALTA" in r.alertas, f"alerta faltante: {r.alertas}")
+    ok(abs(r.tasa_abstencion - 0.5) < 1e-9, f"tasa de abstencion mal: {r.tasa_abstencion}")
+
+
+def test_abstencion_no_cuenta_como_desacuerdo():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+        _elic_ok(Encuadre.SIN_OPCIONES, "HR 0.61"),
+        Elicitacion(None, Encuadre.DESDE_MECANISMO, "m", abstuvo=True),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.VERDE,
+       f"una abstencion entre cuatro aciertos no debe hundir el veredicto: {r.veredicto}")
+    ok(r.cuota_consenso == 1.0, f"la abstencion no es desacuerdo: {r.cuota_consenso}")
+
+
+def test_solo_inferencia_no_llega_a_verde():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO, certeza=Certeza.INFERENCIA),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61", certeza=Certeza.INFERENCIA),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%",
+                 certeza=Certeza.INFERENCIA),
+        _elic_ok(Encuadre.SIN_OPCIONES, "HR 0.61", certeza=Certeza.INFERENCIA),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.AMBAR,
+       f"cuatro inferencias que coinciden pueden compartir el mismo error: {r.veredicto}")
+    ok("SOLO_INFERENCIA" in r.alertas, f"alerta faltante: {r.alertas}")
+
+
+def test_procedencia_incoherente_baja_el_veredicto():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO, proc="ensayo A"),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61", proc="ensayo B"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%", proc="ensayo C"),
+        _elic_ok(Encuadre.SIN_OPCIONES, "HR 0.61", proc="ensayo A"),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.AMBAR,
+       f"misma cifra atribuida a tres estudios distintos no es VERDE: {r.veredicto}")
+    ok("PROCEDENCIA_INCOHERENTE" in r.alertas, f"alerta faltante: {r.alertas}")
+
+
+def test_procedencia_coherente_si_llega_a_verde():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.VERDE,
+       f"cifra y procedencia coherentes deben acreditar: {r.veredicto} / {r.motivos}")
+
+
+def test_mecanismo_opuesto_es_rojo():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+        # el encuadre de mecanismo predice dano, la cifra dice proteccion
+        Elicitacion(None, Encuadre.DESDE_MECANISMO, "m", signo_mecanismo=1),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.ROJO,
+       f"si la fisiologia apunta al lado contrario, va a revision: {r.veredicto}")
+    ok("MECANISMO_OPUESTO" in r.alertas, f"alerta faltante: {r.alertas}")
+
+
+def test_mecanismo_concordante_no_penaliza():
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    elic = [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+        Elicitacion(None, Encuadre.DESDE_MECANISMO, "m", signo_mecanismo=-1),
+    ]
+    r = atestiguar(h, elic)
+    ok(r.veredicto is Veredicto.VERDE,
+       f"mecanismo y cifra en la misma direccion deben acreditar: {r.veredicto}")
 
 
 def main():
