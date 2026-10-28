@@ -596,6 +596,126 @@ def test_aplicar_no_borra_el_resto_del_diagnostico():
     ok("veredicto" in h.diagnostico, "y debe haberse agregado el reporte")
 
 
+# ----------------------------------------- el cierre aritmetico en el motor
+def _cierre_bueno():
+    from harness.coherencia import Observacion, verificar
+    return verificar(Observacion(
+        razon=p1("HR 0.61 (95% CI 0.51-0.72)"), n_total=4304, eventos_total=509,
+        tasa_control=0.145, tasa_tratado=0.091, reduccion_relativa=0.39,
+        significativo_declarado=True))
+
+
+def _cierre_malo():
+    from harness.coherencia import Observacion, verificar
+    return verificar(Observacion(razon=p1("HR 0.61 (95% CI 0.59-0.63)"),
+                                 n_total=4304, tasa_control=0.145))
+
+
+def test_cierre_permite_mostrar_sin_ancla():
+    """La respuesta a "como uso lo que el modelo ya sabe cuando no hay fuente
+    publica". Antes, un hecho sin ancla quedaba en AMBAR con confianza 0.06 y no
+    se mostraba: el sistema respondia no a todo el conocimiento del modelo."""
+    h = hecho_base()
+    elic = [
+        _elic_ok(Encuadre.SIN_OPCIONES),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ]
+    sin = atestiguar(h, elic)
+    h.veredicto, h.confianza = sin.veredicto.value, sin.confianza
+    ok(not h.se_muestra(), f"sin cierre no se muestra: {sin.confianza}")
+
+    con = atestiguar(hecho_base(), elic, cierre=_cierre_bueno())
+    h2 = hecho_base()
+    h2.veredicto, h2.confianza = con.veredicto.value, con.confianza
+    ok(con.veredicto is Veredicto.AMBAR, f"veredicto: {con.veredicto}")
+    ok(h2.se_muestra(), f"con el cierre si se muestra: conf {con.confianza}")
+    ok(con.confianza >= 0.7, f"y con confianza alta: {con.confianza}")
+    ok("COHERENTE_SIN_ANCLA" in con.alertas, f"alertas: {con.alertas}")
+    ok("SELECCION_DE_ESTUDIO_SIN_VERIFICAR" in con.alertas,
+       "y debe decir que falta verificar que sea el estudio correcto")
+
+
+def test_el_cierre_no_alcanza_para_verde():
+    """El cierre prueba que el modelo recuerda un estudio REAL, no que sea el
+    estudio CORRECTO para la afirmacion. Un recuerdo coherente del ensayo
+    equivocado pasa igual, asi que el techo queda por debajo de VERDE."""
+    r = atestiguar(hecho_base(), [
+        _elic_ok(Encuadre.SIN_OPCIONES),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ], cierre=_cierre_bueno())
+    ok(r.veredicto is not Veredicto.VERDE,
+       f"el cierre no sustituye un ancla publica: {r.veredicto}")
+    ok(r.confianza <= 0.80, f"con tope: {r.confianza}")
+
+
+def test_la_aritmetica_manda_sobre_el_consenso():
+    """El caso decisivo. Cuatro elicitaciones coinciden al 100% y el hecho queda
+    BLOQUEADO, porque los numeros no pueden ser verdad a la vez. Es exactamente
+    el modo de fallo que el consenso no puede ver: el modelo recordando mal de
+    forma consistente."""
+    h = hecho_base()
+    elic = [Elicitacion(p1("HR 0.61 (95% CI 0.59-0.63)"), enc, "m",
+                        certeza=Certeza.RECUERDO_EXACTO,
+                        procedencia=Procedencia(estudio="mismo ensayo"))
+            for enc in (Encuadre.SIN_OPCIONES, Encuadre.DESDE_ENSAYO,
+                        Encuadre.DIRECTO, Encuadre.COMPLEMENTO)]
+    r = atestiguar(h, elic, cierre=_cierre_malo())
+    ok(r.cuota_consenso == 1.0, f"el consenso es perfecto: {r.cuota_consenso}")
+    ok(r.veredicto is Veredicto.ROJO,
+       f"y aun asi debe bloquearse: {r.veredicto}")
+    ok(r.confianza == 0.0, "con confianza cero")
+    ok("NO_CIERRA_ARITMETICAMENTE" in r.alertas, f"alertas: {r.alertas}")
+    ok(any("14284" in m or "28.4" in m for m in r.motivos),
+       f"el motivo debe dar la cifra de la imposibilidad: {r.motivos[0][:120]}")
+
+
+def test_la_aritmetica_tambien_manda_sobre_el_ancla():
+    """Si la aritmetica no cierra, no la rescata ni un ancla verificada: el ancla
+    confirma UNA cifra, el cierre comprueba que el CONJUNTO sea posible."""
+    hr = p1("HR 0.61 (95% CI 0.59-0.63)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    r = atestiguar(h, [_elic_ok(Encuadre.DIRECTO, "HR 0.61 (95% CI 0.59-0.63)"),
+                       _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61 (IC 95% 0,59-0,63)"),
+                       _elic_ok(Encuadre.SIN_OPCIONES, "HR 0.61 (95% CI 0.59-0.63)")],
+                  cierre=_cierre_malo())
+    ok(r.veredicto is Veredicto.ROJO, f"la aritmetica va primero: {r.veredicto}")
+
+
+def test_cierre_insuficiente_no_ayuda_ni_estorba():
+    from harness.coherencia import Observacion, verificar
+    vacio = verificar(Observacion())
+    r = atestiguar(hecho_base(), [
+        _elic_ok(Encuadre.SIN_OPCIONES),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ], cierre=vacio)
+    ok(r.veredicto is Veredicto.AMBAR, f"veredicto: {r.veredicto}")
+    ok("SIN_ANCLA" in r.alertas,
+       f"un cierre que no pudo comprobar nada no acredita nada: {r.alertas}")
+    ok("COHERENTE_SIN_ANCLA" not in r.alertas, "y no debe presumir coherencia")
+
+
+def test_cierre_con_pocas_relaciones_no_alcanza():
+    from harness.coherencia import Observacion, verificar
+    # solo el intervalo: dos relaciones (punto dentro, simetria), menos de tres
+    flojo = verificar(Observacion(razon=p1("HR 0.61 (95% CI 0.51-0.72)")))
+    r = atestiguar(hecho_base(), [
+        _elic_ok(Encuadre.SIN_OPCIONES),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ], cierre=flojo)
+    ok("COHERENTE_SIN_ANCLA" not in r.alertas,
+       f"con menos de tres relaciones el cierre no acredita: {r.alertas}")
+
+
+def test_el_cierre_queda_en_el_reporte():
+    r = atestiguar(hecho_base(), [_elic_ok(Encuadre.DIRECTO)], cierre=_cierre_bueno())
+    ok(r.cierre_aritmetico == "cierra", f"el reporte debe registrarlo: {r.cierre_aritmetico}")
+    ok("cierre_aritmetico" in r.dict(), "y serializarse")
+
+
 def main():
     pruebas = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in pruebas:

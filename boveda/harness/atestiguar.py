@@ -43,6 +43,7 @@ from .numeros import (
     Acuerdo, Clase, Magnitud, agrupar, comparar, factor_de_alarma,
     orden_de_magnitud_distinto,
 )
+from .coherencia import Cierre, ReporteCierre
 from .hecho import Hecho, TipoAncla
 
 
@@ -143,9 +144,10 @@ class Reporte:
     n_elicitaciones: int
     n_encuadres: int
     cuota_consenso: float
-    tasa_abstencion: float
     anclas_verificadas: int
     ancla_mas_fuerte: Optional[str]
+    tasa_abstencion: float = 0.0
+    cierre_aritmetico: Optional[str] = None
     motivos: list[str] = field(default_factory=list)
     alertas: list[str] = field(default_factory=list)
     grupos: list[list[str]] = field(default_factory=list)
@@ -158,6 +160,7 @@ class Reporte:
             "n_elicitaciones": self.n_elicitaciones,
             "n_encuadres": self.n_encuadres,
             "cuota_consenso": round(self.cuota_consenso, 3),
+            "cierre_aritmetico": self.cierre_aritmetico,
             "tasa_abstencion": round(self.tasa_abstencion, 3),
             "anclas_verificadas": self.anclas_verificadas,
             "ancla_mas_fuerte": self.ancla_mas_fuerte,
@@ -198,6 +201,7 @@ def atestiguar(
     elicitaciones: Sequence[Elicitacion],
     sondas: Sequence[SondaFalsa] = (),
     tol: float = TOL_DEFECTO,
+    cierre: Optional[ReporteCierre] = None,
 ) -> Reporte:
     """Evalua una cifra y devuelve su veredicto con el diagnostico completo.
 
@@ -231,6 +235,7 @@ def atestiguar(
         return Reporte(
             veredicto=v, confianza=conf, magnitud_consenso=consenso,
             n_elicitaciones=len(validas), n_encuadres=n_enc, cuota_consenso=cuota,
+            cierre_aritmetico=cierre.cierre.value if cierre else None,
             tasa_abstencion=tasa_abstencion,
             anclas_verificadas=len(anclas_ver), ancla_mas_fuerte=nombre_ancla,
             motivos=motivos, alertas=alertas,
@@ -246,6 +251,25 @@ def atestiguar(
         )
         alertas.append("SICOFANCIA")
         return rep(Veredicto.NEGRO, 0.0)
+
+    # ---- Regla 0.5: contradiccion aritmetica. Manda sobre el consenso.
+    #
+    # Esta regla va antes que el consenso a proposito. Si las cantidades
+    # reportadas no pueden ser verdad a la vez, el acuerdo entre elicitaciones no
+    # rescata nada: significa que el modelo recuerda mal de forma consistente, y
+    # eso es exactamente el modo de fallo que el consenso NO puede ver. Diez
+    # respuestas iguales sobre un intervalo imposible siguen siendo imposibles.
+    if cierre is not None and cierre.cierre is Cierre.NO_CIERRA:
+        graves = [f for f in cierre.fallos if f.severidad == "alta"]
+        alertas.append("NO_CIERRA_ARITMETICAMENTE")
+        for f in graves[:3]:
+            alertas.append(f.codigo)
+        motivos.append(
+            f"las cantidades reportadas no cierran entre si "
+            f"({cierre.relaciones_falladas} de {cierre.relaciones_comprobadas} "
+            f"relaciones falladas). " + (graves[0].detalle if graves else "")
+        )
+        return rep(Veredicto.ROJO, 0.0)
 
     # ---- Regla 1: contradiccion con el ancla. Peor que no tener dato.
     # Se registra tambien que anclas CONFIRMAN de verdad, porque la sola
@@ -436,6 +460,32 @@ def atestiguar(
         return rep(Veredicto.AMBAR, conf * 0.8)
 
     if not anclas_confirman:
+        # Via del CIERRE ARITMETICO. Es la respuesta a "como uso lo que el modelo
+        # ya sabe cuando no hay fuente publica donde verificarlo".
+        #
+        # No se verifica la cifra contra un documento: se verifica que el conjunto
+        # de cantidades ligadas sea mutuamente consistente. Un modelo que
+        # confabula produce numeros localmente plausibles y globalmente
+        # incoherentes, porque al confabular hace coincidencia de patrones y no
+        # aritmetica. Que cuatro relaciones independientes cierren a la vez es
+        # dificil de lograr por azar y facil de comprobar por codigo.
+        #
+        # Techo deliberado por debajo del VERDE: el cierre prueba que el modelo
+        # recuerda un estudio REAL, no que sea el estudio CORRECTO para esta
+        # afirmacion. Un recuerdo coherente del ensayo equivocado pasa igual.
+        if cierre is not None and cierre.cierre is Cierre.CIERRA \
+                and cierre.relaciones_comprobadas >= 3:
+            alertas.append("COHERENTE_SIN_ANCLA")
+            alertas.append("SELECCION_DE_ESTUDIO_SIN_VERIFICAR")
+            motivos.append(
+                f"sin ancla publica, pero las cantidades reportadas cierran entre si en "
+                f"{cierre.relaciones_comprobadas} relaciones independientes "
+                f"(eventos que implica el intervalo, simetria, identidades de tasas). "
+                f"Eso indica recuerdo de un estudio real, no relleno. Queda sin verificar "
+                f"que sea el estudio correcto para esta afirmacion"
+            )
+            return rep(Veredicto.AMBAR, max(conf, cierre.confianza))
+
         motivos.append("consenso sin ancla que lo confirme: se muestra como no anclado")
         alertas.append("SIN_ANCLA")
     return rep(Veredicto.AMBAR, conf * 0.7)
@@ -536,7 +586,7 @@ def _confianza(cuota: float, n_enc: int, n: int,
 
 def aplicar(hecho: Hecho, elicitaciones: Sequence[Elicitacion],
             sondas: Sequence[SondaFalsa] = (), tol: float = TOL_DEFECTO,
-            momento: str = "") -> Hecho:
+            momento: str = "", cierre: Optional[ReporteCierre] = None) -> Hecho:
     """Atestigua, escribe el resultado en el hecho y deja constancia.
 
     La version anterior sobreescribia veredicto y confianza en el mismo objeto
@@ -546,7 +596,7 @@ def aplicar(hecho: Hecho, elicitaciones: Sequence[Elicitacion],
     reconstruccion no sirve y la bitacora si. El registro es append-only.
     """
     previo = (hecho.veredicto, round(hecho.confianza, 4))
-    r = atestiguar(hecho, elicitaciones, sondas, tol)
+    r = atestiguar(hecho, elicitaciones, sondas, tol, cierre)
     hecho.veredicto = r.veredicto.value
     hecho.confianza = r.confianza
     # update, NO asignacion. Asignar borraba todo lo demas que vive en el
