@@ -1,0 +1,823 @@
+<title>Bóveda ORIONS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Documento técnico: índice fijo a la izquierda en pantalla ancha, columna de
+   lectura de ~68ca, fichas semáforo para los dictámenes de licencia, y
+   monoespaciada para identificadores, desplazamientos y fórmulas. */
+:root{
+  --ink:#141a24; --ink-2:#3d4756; --ink-3:#6b7684;
+  --paper:#fbfaf8; --surface:#ffffff; --line:#e2e0da; --line-2:#cfccc4;
+  --accent:#2a3f8f; --accent-soft:#eaedf7;
+  --verde:#1f6b4a; --verde-bg:#e6f2ec;
+  --ambar:#8a5a00; --ambar-bg:#fbf0db;
+  --rojo:#9b2222; --rojo-bg:#f8e8e6;
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-txt:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#e8e6e1; --ink-2:#b3b8c2; --ink-3:#848b97;
+  --paper:#12151b; --surface:#191d25; --line:#2a2f3a; --line-2:#3a4150;
+  --accent:#9db0ef; --accent-soft:#1d2440;
+  --verde:#6cc295; --verde-bg:#15291f;
+  --ambar:#d9a33f; --ambar-bg:#2b2113;
+  --rojo:#e08b84; --rojo-bg:#2d1917;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ink:#e8e6e1; --ink-2:#b3b8c2; --ink-3:#848b97;
+  --paper:#12151b; --surface:#191d25; --line:#2a2f3a; --line-2:#3a4150;
+  --accent:#9db0ef; --accent-soft:#1d2440;
+  --verde:#6cc295; --verde-bg:#15291f;
+  --ambar:#d9a33f; --ambar-bg:#2b2113;
+  --rojo:#e08b84; --rojo-bg:#2d1917;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-txt);
+  font-size:16px;line-height:1.62;margin:0}
+.wrap{max-width:1180px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 72px}
+
+/* ---- cabecera ---- */
+header{border-bottom:2px solid var(--ink);padding-block:36px 22px;margin-bottom:28px}
+.eyebrow{font-family:var(--f-ui);font-size:11px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+h1{font-family:var(--f-ui);font-size:clamp(28px,5.4vw,44px);font-weight:700;
+  letter-spacing:-.022em;line-height:1.08;margin:0 0 12px;text-wrap:balance}
+.sub{font-size:17px;color:var(--ink-2);margin:0 0 22px;max-width:56ch}
+.meta{font-family:var(--f-num);font-size:12px;color:var(--ink-3);
+  display:flex;flex-wrap:wrap;gap:6px 18px;margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  padding:9px 14px;min-width:0}
+.stat b{display:block;font-family:var(--f-num);font-size:20px;font-weight:500;
+  letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat span{font-family:var(--f-ui);font-size:10.5px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3)}
+
+/* ---- rejilla ---- */
+.grid{display:grid;grid-template-columns:1fr;gap:34px}
+@media(min-width:960px){.grid{grid-template-columns:208px minmax(0,1fr);gap:52px;
+  align-items:start}}
+nav{min-width:0}
+@media(min-width:960px){nav{position:sticky;top:max(16px,env(safe-area-inset-top,0px))}}
+nav h2{font-family:var(--f-ui);font-size:10.5px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;padding-bottom:8px;
+  border-bottom:1px solid var(--line)}
+nav ol{list-style:none;margin:0;padding:0;font-family:var(--f-ui);font-size:13px;
+  display:grid;gap:1px}
+nav a{display:flex;gap:9px;color:var(--ink-2);text-decoration:none;padding:3.5px 0;
+  border-radius:2px}
+nav a:hover,nav a:focus-visible{color:var(--accent)}
+nav a i{font-family:var(--f-num);font-size:11px;font-style:normal;color:var(--ink-3);
+  flex:none;width:15px;font-variant-numeric:tabular-nums}
+main{min-width:0}
+
+/* ---- secciones ---- */
+section{margin-bottom:46px;scroll-margin-top:24px}
+h2.sec{font-family:var(--f-ui);font-size:clamp(19px,3vw,25px);font-weight:600;
+  letter-spacing:-.016em;line-height:1.2;margin:0 0 4px;text-wrap:balance;
+  display:flex;gap:11px;align-items:baseline}
+h2.sec i{font-family:var(--f-num);font-size:13px;font-style:normal;font-weight:400;
+  color:var(--accent);flex:none;font-variant-numeric:tabular-nums}
+h2.sec+.lead{color:var(--ink-2);margin:0 0 18px;padding-bottom:14px;
+  border-bottom:1px solid var(--line)}
+h3{font-family:var(--f-ui);font-size:16px;font-weight:600;letter-spacing:-.008em;
+  margin:26px 0 8px;text-wrap:balance}
+h4{font-family:var(--f-ui);font-size:13px;font-weight:600;letter-spacing:.02em;
+  margin:20px 0 6px;color:var(--ink-2)}
+p{margin:0 0 13px;max-width:68ch}
+ul,ol.body{margin:0 0 14px;padding-left:20px;max-width:66ch}
+li{margin-bottom:6px}
+strong{font-weight:600}
+em{font-style:italic}
+code,.mono{font-family:var(--f-num);font-size:.875em;font-variant-numeric:tabular-nums}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:2px;
+  overflow-wrap:break-word}
+a{color:var(--accent)}
+
+/* ---- tablas ---- */
+.scroll{overflow-x:auto;margin:0 0 16px;border:1px solid var(--line);border-radius:3px;
+  background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-ui);font-size:13.5px;
+  line-height:1.45}
+th{text-align:left;font-weight:600;font-size:10.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-3);padding:9px 12px;
+  border-bottom:1px solid var(--line-2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n{font-family:var(--f-num);color:var(--ink-3);text-align:right;width:1%}
+
+/* ---- fichas de estado ---- */
+.chip{display:inline-block;font-family:var(--f-ui);font-size:10.5px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:2px;
+  white-space:nowrap}
+.v{background:var(--verde-bg);color:var(--verde)}
+.a{background:var(--ambar-bg);color:var(--ambar)}
+.r{background:var(--rojo-bg);color:var(--rojo)}
+
+/* ---- destacados ---- */
+.callout{background:var(--surface);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+  padding:16px 18px;margin:0 0 18px}
+.callout p:last-child{margin-bottom:0}
+.callout .k{font-family:var(--f-ui);font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 7px}
+.callout.warn{border-left-color:var(--ambar)}
+.callout.warn .k{color:var(--ambar)}
+.quote{font-size:17px;line-height:1.5;border-left:3px solid var(--line-2);
+  padding-left:16px;margin:0 0 16px;color:var(--ink-2);max-width:62ch}
+.quote strong{color:var(--ink)}
+pre{font-family:var(--f-num);font-size:12px;line-height:1.6;background:var(--surface);
+  border:1px solid var(--line);border-radius:3px;padding:14px;margin:0 0 16px;
+  overflow-x:auto;white-space:pre}
+.formula{font-family:var(--f-num);font-size:14px;background:var(--accent-soft);
+  border-radius:3px;padding:12px 14px;margin:0 0 14px;overflow-x:auto}
+footer{border-top:1px solid var(--line);margin-top:48px;padding-top:18px;
+  font-size:13.5px;color:var(--ink-3);max-width:68ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Informe de sesión</p>
+  <h1>Bóveda ORIONS</h1>
+  <p class="sub">Cómo usar las guías clínicas sin presupuesto para licenciarlas, y cómo
+  evitar que el modelo alucine con el conocimiento que ya tiene.</p>
+  <p class="meta"><span>28 de octubre de 2026</span><span>rama ccr-6a779150-26tjt6</span><span>14 commits</span></p>
+  <div class="stats">
+    <div class="stat"><b>823</b><span>aserciones, 0 fallos</span></div>
+    <div class="stat"><b>5</b><span>hechos reales anclados</span></div>
+    <div class="stat"><b>6&nbsp;012</b><span>líneas de harness</span></div>
+    <div class="stat"><b>22</b><span>agentes de investigación</span></div>
+    <div class="stat"><b>20</b><span>bugs encontrados</span></div>
+  </div>
+</header>
+
+<div class="grid">
+<nav>
+  <h2>Contenido</h2>
+  <ol>
+    <li><a href="#resumen"><i>1</i>Resumen</a></li>
+    <li><a href="#buscamos"><i>2</i>Qué buscamos</a></li>
+    <li><a href="#soluciones"><i>3</i>Las soluciones</a></li>
+    <li><a href="#arco"><i>4</i>El arco honesto</a></li>
+    <li><a href="#fuentes"><i>5</i>Fuentes</a></li>
+    <li><a href="#tesis"><i>6</i>La tesis</a></li>
+    <li><a href="#cita148"><i>7</i>Artículo 148</a></li>
+    <li><a href="#rutas"><i>8</i>Rutas de acceso</a></li>
+    <li><a href="#construido"><i>9</i>Lo construido</a></li>
+    <li><a href="#boveda"><i>10</i>La Bóveda real</a></li>
+    <li><a href="#bugs"><i>11</i>Los 20 bugs</a></li>
+    <li><a href="#legal"><i>12</i>Legal</a></li>
+    <li><a href="#regulatorio"><i>13</i>Regulatorio</a></li>
+    <li><a href="#pendiente"><i>14</i>Sin verificar</a></li>
+    <li><a href="#plan"><i>15</i>Plan</a></li>
+    <li><a href="#riesgos"><i>16</i>Riesgos</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="resumen">
+  <h2 class="sec"><i>01</i>Resumen</h2>
+  <p class="lead">Tres hallazgos cambian el proyecto. Los dos primeros son inversiones
+  de lo que asumíamos; el tercero es un número que nadie había medido.</p>
+
+  <h3>La cita literal es la vía permitida. La paráfrasis es la prohibida.</h3>
+  <p>Las guías de <strong>KDIGO se publican en acceso abierto bajo CC BY-NC-ND</strong>,
+  y su licencia concede más de lo que supone un CC BY-NC-ND estándar: para fines no
+  comerciales permite copiar, distribuir y <em>«use portions or extracts from the article
+  in other works»</em>, y <em>«noncommercial copying and text or data mining are
+  allowed»</em>. Lo prohibido es <strong>alterar</strong> y el <strong>uso
+  comercial</strong>.</p>
+  <p>La ADA exige que <em>«the work is not altered»</em>, y ya concedió de antemano el
+  derecho a mostrar su <em>slide deck</em> oficial de los Standards of Care sin alterarlo
+  y con atribución.</p>
+  <p class="quote">Leídas juntas: un sistema que <strong>parafrasea</strong> viola esas
+  cláusulas; un visor que <strong>cita palabra por palabra</strong> las cumple.</p>
+
+  <h3>Las dos preguntas eran la misma</h3>
+  <p>La arquitectura que la licencia <strong>exige</strong> —reproducir la oración sin
+  alterarla, con atribución y DOI— es también la única con <strong>cero riesgo de
+  alucinación</strong> en el núcleo normativo: si el bloque es texto
+  <strong>recuperado</strong> y no <strong>generado</strong>, el modelo no puede inventar
+  el umbral ni la etiqueta de evidencia. No hay nada que confabular en una cadena copiada
+  de un archivo.</p>
+  <div class="callout"><p class="k">El giro</p><p>La restricción que parecía el obstáculo
+  es el diseño.</p></div>
+
+  <h3>El intervalo de confianza delata la cifra inventada</h3>
+  <p>Una cifra clínica no es una consulta aislada: vive en una red de restricciones
+  aritméticas comprobables <strong>sin salir del modelo</strong>. El ancho de un intervalo
+  de confianza determina el número de eventos del estudio:</p>
+  <div class="formula">SE(ln HR) = (ln U − ln L) / 3.92&nbsp;&nbsp;&nbsp;&nbsp;eventos ≈ 4 / SE²</div>
+  <div class="callout"><p class="k">Validación</p>
+  <p>De <code>HR 0.61 (95% CI 0.51–0.72)</code> solo, sin ninguna fuente externa, la
+  fórmula predice <strong>517 eventos</strong>. DAPA-CKD publicó <strong>509</strong>.
+  Error 1.5 %.</p></div>
+</section>
+
+<section id="buscamos">
+  <h2 class="sec"><i>02</i>Qué buscamos</h2>
+  <p class="lead">El objetivo del producto y los dos problemas que había que resolver.</p>
+
+  <p>ORIONS es una plataforma de <strong>aprendizaje médico basada en la evidencia más
+  reciente</strong> para estudiantes de medicina, internos y aspirantes al ENARM en México.
+  No es un chatbot ni un generador de contenido: es <strong>razonamiento clínico</strong>
+  —illness scripts, grafo de conocimiento, tutoría adaptativa— con una restricción
+  fundacional: <strong>presupuesto cercano a cero</strong>, sin dinero para licenciar guías
+  (la ESC cobra del orden de 30 000 EUR por guía al año para uso en IA).</p>
+
+  <h3>Problema 1 · Usar las fuentes</h3>
+  <p>Las guías que importan (ADA, AHA/ACC, KDIGO, ESC) son el estándar contra el que se
+  califica el ENARM y contra el que se practica. La pregunta no era «qué alternativa hay»,
+  era <strong>cómo sí usar esas fuentes, o demostrar que es imposible</strong>. Responder
+  «usa otras» es sustituir el problema.</p>
+
+  <h3>Problema 2 · Que el modelo no alucine con lo que ya sabe</h3>
+  <p>El modelo conoce las guías: las aprendió en su entrenamiento. La pregunta era cómo
+  <strong>aprovechar ese conocimiento sin que confabule cifras</strong>, no cómo rechazarlo
+  por falta de fuente pública. Un sistema que responde «no se puede mostrar» a todo lo que
+  no tiene ancla externa no resuelve nada: rechaza.</p>
+
+  <h3>El criterio de éxito</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Buscábamos</th><th>No buscábamos</th></tr></thead>
+    <tbody>
+      <tr><td>Una ruta de acceso real y verificable a las fuentes</td><td>Una lista de alternativas «abiertas pero insuficientes»</td></tr>
+      <tr><td>Que el conocimiento del modelo sea utilizable con salvaguardas</td><td>Una máquina de cuarentena que lo bloquee todo</td></tr>
+      <tr><td>Contenido <em>dentro</em> de la Bóveda</td><td>Maquinaria vacía</td></tr>
+      <tr><td>Que la Bóveda sea defendible sin volverse inútil</td><td>Que sea segura por no mostrar nada</td></tr>
+      <tr><td>Algo construible sin dinero y sin nómina médica</td><td>Un plan que empiece cuando haya financiamiento</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Las restricciones que no se negocian</h3>
+  <ol class="body">
+    <li><strong>Ninguna cifra equivocada llega a un estudiante.</strong> Un hecho ausente
+    le cuesta una pregunta; un hecho equivocado le cuesta una conducta clínica.</li>
+    <li>Todo lo que se muestra es <strong>re-verificable por un tercero</strong> sin
+    confiar en el sistema.</li>
+    <li><strong>ORIONS no emite normas</strong>: transcribe las de otros, atribuidas y
+    ancladas.</li>
+    <li>Nada que cruce a <strong>software como dispositivo médico</strong>.</li>
+  </ol>
+</section>
+
+<section id="soluciones">
+  <h2 class="sec"><i>03</i>Las soluciones</h2>
+  <p class="lead">Cuatro soluciones, en orden de fuerza. Las cuatro están implementadas y
+  probadas; las dos últimas resuelven lo que faltaba.</p>
+
+  <h3>1 · Reconstruir la evidencia desde fuentes con permiso</h3>
+  <p><strong>Para qué sirve:</strong> las cifras duras. Tamaños de efecto, intervalos,
+  ventanas de elegibilidad, dosis, criterios.</p>
+  <p><strong>Cómo:</strong> las guías son <strong>obras derivadas</strong> de evidencia
+  primaria, y esa evidencia es en buena parte libre. ORIONS no copia la guía: reconstruye
+  su base de evidencia desde ClinicalTrials.gov (licencia expresa gratuita), openFDA (CC0),
+  PMC CC-BY, VA/DoD, CDC y las NOM, y <strong>deriva</strong> la recomendación mostrando la
+  derivación completa.</p>
+  <p><strong>Alcance medido:</strong> 85–95 % de las cifras duras, 95–100 % de los
+  mecanismos. <strong>0 % de la frase normativa.</strong></p>
+  <p><strong>Su límite:</strong> no alcanza el núcleo normativo, y ese núcleo es lo que el
+  ENARM evalúa.</p>
+
+  <h3>2 · Extracción directa verificada byte a byte</h3>
+  <p>La cifra no se <em>recuerda</em>: se <strong>lee</strong> del documento y se verifica
+  carácter por carácter, guardando la ruta exacta (ruta JSON del registro, campo y
+  desplazamiento de la etiqueta, u <code>offset</code> del artículo). El ancla no confirma
+  un recuerdo: <strong>es</strong> la procedencia.</p>
+  <p>Por eso no exige triangulación entre encuadres: no hay nada que confabular.
+  Castigarla por no tenerla era un error de diseño que esta sesión corrigió.</p>
+  <p><strong>Su límite honesto:</strong> la extracción pudo tomar el número equivocado del
+  documento —un subgrupo en vez del desenlace primario—. Eso no es confabulación, es mala
+  selección, y no lo arregla ninguna aritmética: lo arregla una segunda lectura. Por eso el
+  hecho llega a VERDE por fidelidad a la fuente y lleva la alerta
+  <code>EXTRACCION_SIN_SEGUNDA_LECTURA</code>.</p>
+
+  <h3>3 · Cierre aritmético <span class="chip v">resuelve el problema 2</span></h3>
+  <p><strong>Para qué sirve:</strong> usar lo que el modelo ya sabe <strong>cuando no hay
+  ninguna fuente pública donde verificarlo</strong>.</p>
+  <p><strong>El error conceptual que corrige:</strong> tratar una cifra recordada como una
+  consulta aislada, verificable solo por fuera. No lo es.</p>
+  <ul>
+    <li>El intervalo de confianza de una razón es <strong>simétrico en escala logarítmica
+    por construcción</strong>, no por convención.</li>
+    <li>El <strong>ancho del intervalo determina el número de eventos</strong> del estudio.</li>
+    <li>Ese número también se deduce del tamaño de muestra y la tasa del control.
+    <strong>Las dos deducciones tienen que coincidir.</strong></li>
+    <li>Razón, reducción absoluta, NNT y tasas por brazo forman un sistema con
+    <strong>más ecuaciones que incógnitas</strong>.</li>
+  </ul>
+  <p><strong>Por qué funciona:</strong> preguntar lo mismo diez veces mide <strong>ruido de
+  muestreo</strong>. Preguntar por cantidades <strong>ligadas</strong> y comprobar si el
+  sistema cierra mide otra cosa: si el modelo recuerda un estudio real o está rellenando
+  huecos. Al confabular hace coincidencia de patrones, <strong>no aritmética</strong>, así
+  que produce números localmente plausibles y <strong>globalmente inconsistentes</strong>.</p>
+
+  <h4>Lo que atrapa</h4>
+  <div class="scroll"><table>
+    <thead><tr><th>Fabricación</th><th>Firma que deja</th></tr></thead>
+    <tbody>
+      <tr><td class="num">IC demasiado estrecho<br>0.61 (0.59–0.63), n=4 304</td><td>Implica <strong>14 284 eventos en 4 304 personas</strong>. 28× imposible.</td></tr>
+      <tr><td class="num">IC de otro análisis<br>0.61 (0.55–0.95)</td><td>Asimetría logarítmica <strong>1.22</strong>; 5 cifras reales caen entre 0.005 y 0.093.</td></tr>
+      <tr><td>Confundir la razón con su complemento</td><td>La identidad RRR = 1 − HR no cierra.</td></tr>
+      <tr><td>NNT que no es el recíproco de la reducción absoluta</td><td>Identidad exacta, sin margen.</td></tr>
+      <tr><td class="num">mg/dL y mmol/L</td><td>La conversión por peso molecular es fija.</td></tr>
+      <tr><td>Dosis por kilo declarada como absoluta</td><td>mg/kg × peso ≠ total. El error de dosificación más grave.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>El efecto en el motor</h4>
+  <pre>Sin ancla, sin cierre        → ÁMBAR 0.06   no se muestra
+Sin ancla, cierre pasa (7)   → ÁMBAR 0.80   SE MUESTRA
+Consenso 100 %, no cierra    → ROJO  0.00   BLOQUEADO</pre>
+  <p>El tercero es el decisivo: <strong>4 de 4 elicitaciones coincidían</strong> y el hecho
+  queda bloqueado. Es el modo de fallo que el consenso <strong>no puede</strong> ver: el
+  modelo recordando mal de forma consistente. Y tampoco lo rescata un ancla verificada —el
+  ancla confirma <em>una</em> cifra, el cierre comprueba que el <em>conjunto</em> sea
+  posible.</p>
+  <p><strong>Su límite honesto:</strong> el cierre prueba que el modelo recuerda un estudio
+  <strong>real</strong>, no que sea el estudio <strong>correcto</strong> para la afirmación.
+  Un recuerdo coherente del ensayo equivocado pasa igual. Por eso llega a ÁMBAR 0.80 y no a
+  VERDE, con la alerta <code>SELECCION_DE_ESTUDIO_SIN_VERIFICAR</code>.</p>
+
+  <h3>4 · Cita verbatim <span class="chip v">resuelve el problema 1</span></h3>
+  <p><strong>Para qué sirve:</strong> el núcleo normativo. La frase de la recomendación, el
+  umbral elegido, la etiqueta de Clase y Nivel de Evidencia. <strong>Exactamente el 0 % que
+  la solución 1 no alcanza.</strong></p>
+  <p><strong>El descubrimiento:</strong> las licencias de las fuentes que se necesitan
+  prohíben exactamente lo que se había construido. «No Derivatives» significa que la cita
+  literal es la vía permitida y la paráfrasis la prohibida.</p>
+  <p><strong>Y por eso resuelve los dos problemas a la vez:</strong> si el bloque normativo
+  es texto recuperado y no generado, el modelo <strong>no puede inventar</strong> el umbral
+  ni la etiqueta.</p>
+  <div class="callout"><p class="k">Cómo se hace cumplir, y no es por disciplina</p>
+  <p>Una <code>CitaVerbatim</code> <strong>no se puede construir pasándole una
+  cadena</strong>. Solo se obtiene con <code>extraer()</code>, que recibe el
+  <strong>documento</strong> y las <strong>coordenadas</strong> y corta. Es la única puerta,
+  y existe para que sea <strong>estructuralmente imposible</strong> que un texto generado
+  pase por cita.</p>
+  <p>Y <code>localizar()</code> devuelve <code>None</code> cuando el fragmento no está
+  literalmente en la fuente: ese <code>None</code> significa que lo que se creía una cita es
+  una paráfrasis, que es lo peor de los dos mundos —viola la cláusula de no alteración
+  <em>y</em> puede estar alucinada.</p></div>
+  <p><strong>Su límite:</strong> la variable que decide todo es <strong>no comercial</strong>.
+  En capa no monetizada la ruta de KDIGO está completa hoy, sin carta y sin pago. En
+  producto pagado hace falta permiso expreso.</p>
+
+  <h3>Las cuatro juntas</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Solución</th><th>Cubre</th><th>Techo</th><th>Requiere</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Reconstruir evidencia</td><td>cifras duras, mecanismos</td><td><span class="chip v">verde</span></td><td>fuente con permiso</td></tr>
+      <tr><td>2 · Extracción byte a byte</td><td>lo que esté en un documento usable</td><td><span class="chip v">verde</span></td><td>documento usable</td></tr>
+      <tr><td>3 · Cierre aritmético</td><td>lo que el modelo sabe, sin fuente</td><td><span class="chip a">ámbar 0.80</span></td><td>≥3 relaciones ligadas</td></tr>
+      <tr><td>4 · Cita verbatim</td><td><strong>el núcleo normativo</strong></td><td><span class="chip v">verde</span></td><td>licencia que permita extractos</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Lo que ninguna resuelve:</strong> el orden de los pilares de la IC-FEr, los
+  umbrales de suspensión, y la rejilla de riesgo de KDIGO como objeto gráfico. Los dos
+  primeros porque <strong>la evidencia no existe</strong> —nadie aleatorizó a suspender—, el
+  tercero porque el derecho de cita <strong>cubre solo texto</strong>.</p>
+</section>
+
+<section id="arco">
+  <h2 class="sec"><i>04</i>El arco honesto</h2>
+  <p class="lead">Dos veces sustituí el problema por uno más fácil. Importa porque explica
+  el resto del informe.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Momento</th><th>Lo que hice</th><th>Por qué estaba mal</th></tr></thead>
+    <tbody>
+      <tr><td>Primera mitad</td><td>Respondí «no puedes usar esas fuentes, usa estas otras»</td><td><strong>Sustituí el problema.</strong> No encontré ruta ni probé imposibilidad.</td></tr>
+      <tr><td>Segunda mitad</td><td>Construí un harness que <strong>exige ancla externa</strong> y manda lo demás a cuarentena</td><td><strong>No resolvía: rechazaba.</strong> Para la frase normativa —que yo mismo medí como 0 % reconstruible— respondía «no se puede mostrar».</td></tr>
+      <tr><td>Tras la crítica</td><td>La Bóveda estaba <strong>vacía</strong>: 0 hechos, el único ejemplo marcado como demo</td><td>Construí maquinaria y la llamé construcción.</td></tr>
+      <tr><td>Además</td><td>Dos módulos enteros convirtiendo riesgos legales en código</td><td>Me habías dicho que veíamos los peros en vez de construir, y lo repetí a escala.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Las correcciones de la última parte —cita verbatim, cierre aritmético, 5 hechos
+  reales— salieron de esas críticas, no de mi iniciativa.</p>
+</section>
+
+<section id="fuentes">
+  <h2 class="sec"><i>05</i>Inventario de fuentes</h2>
+  <p class="lead">22 agentes de investigación, ~1.62 M tokens, 401 usos de herramienta.</p>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th>Fuente</th><th>Com.</th><th>IA</th><th>Hallazgo decisivo</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip v">verde</span></td><td><strong>ClinicalTrials.gov</strong></td><td>sí</td><td>sí</td><td><strong>No es dominio público: es licencia expresa gratuita a cualquiera.</strong> Eso vuelve irrelevante que México no tenga excepción de minería de datos: no se necesita excepción cuando hay licencia.</td></tr>
+      <tr><td><span class="chip v">verde</span></td><td><strong>openFDA / DailyMed</strong></td><td>sí</td><td>sí</td><td>CC0 1.0. Trae <code>mechanism_of_action</code> (§12.1) como campo dedicado. <strong>No existe campo de ajuste renal</strong>: los cortes de eGFR viven solo en prosa.</td></tr>
+      <tr><td><span class="chip v">verde</span></td><td><strong>PMC Open Access</strong></td><td>sí</td><td>sí</td><td>Licencia <strong>por artículo y por versión</strong>. La infraestructura clásica (FTP, <code>oa.fcgi</code>) <strong>murió en agosto de 2026</strong>; la ruta viva es <code>s3://pmc-oa-opendata</code>.</td></tr>
+      <tr><td><span class="chip v">verde</span></td><td><strong>VA/DoD</strong></td><td>sí</td><td>sí</td><td>Dominio público (17 USC 105). Sin API. <strong>Hueco cardiológico confirmado</strong>: no hay guía de insuficiencia cardiaca, ni de síndrome coronario agudo, ni de arritmias.</td></tr>
+      <tr><td><span class="chip v">verde</span></td><td><strong>CDC MMWR + CDSi</strong></td><td>sí</td><td>sí</td><td>El MMWR es el dominio público más limpio del bloque de EE. UU. <strong>CDSi es el único lugar donde el calendario ACIP existe como lógica ejecutable</strong>, no como PDF.</td></tr>
+      <tr><td><span class="chip v">verde</span></td><td><strong>NOM (vía DOF)</strong></td><td>sí</td><td>sí</td><td>LFDA art. 14 fr. VIII. Única fuente del criterio <strong>obligatorio</strong> en México.</td></tr>
+      <tr><td><span class="chip a">ámbar</span></td><td><strong>USPSTF</strong></td><td>no</td><td>no</td><td><strong>Corrección de un error mío: NO es dominio público.</strong> AHRQ concede permiso condicionado a que la obra quede <strong>inalterada</strong>, con cláusula anticomercial. Incompatible con derivar.</td></tr>
+      <tr><td><span class="chip r">rojo</span></td><td><strong>CENETEC</strong></td><td>—</td><td>—</td><td><strong>Puede no existir.</strong> Es ahora DGMoSS y prensa de 2025 reporta acceso suspendido. No es problema de licencia: es de <strong>existencia</strong>.</td></tr>
+      <tr><td><span class="chip r">rojo</span></td><td><strong>Terminologías y grafos</strong></td><td>—</td><td>—</td><td><strong>No verificado</strong> por bloqueo de red, no por ambigüedad. Los agentes se negaron a dictaminar de memoria.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Las cuatro trampas, hechas código</h3>
+  <ol class="body">
+    <li><strong>«Uso comercial permitido» ≠ «derivable sin contagio».</strong> PMC agrupa
+    CC BY-SA y CC BY-ND como <em>Commercial Use Allowed</em>. La primera contagiaría la
+    Bóveda entera; la segunda <strong>prohíbe derivados</strong>, y un hecho atómico
+    extraído <em>es</em> un derivado. Por eso la lista es <strong>blanca y por cadena
+    exacta</strong>.</li>
+    <li><strong><code>license_code = null</code> con <code>is_pmc_openaccess = true</code>
+    existe.</strong> Verificado en registros reales. Tratar <code>null</code> como permisivo
+    ingiere sin permiso comprobado.</li>
+    <li><strong>El dominio público no alcanza al contenido de terceros embebido.</strong>
+    El 17 USC 105 despoja de derechos a lo que escribió el gobierno, no a lo que reprodujo
+    con permiso ajeno. Caso verificado: los criterios del DSM-5 dentro de la guía VA/DoD de
+    estrés postraumático.</li>
+    <li><strong>Dos exclusiones que no son de licencia sino de seguridad clínica:</strong>
+    <code>is_retracted</code> (un artículo retractado <strong>jamás</strong> ancla un hecho,
+    y como se retractan <em>después</em> de ingerir, el re-chequeo es obligación continua) y
+    <code>is_historical_ocr</code> (para extraer cifras exactas, un 8 que era un 3 es peor
+    que no tener el artículo).</li>
+  </ol>
+
+  <h3>Obligaciones continuas</h3>
+  <p>El permiso no es un trámite que se cierra: es carga de operación.</p>
+  <ul>
+    <li><strong>ClinicalTrials.gov</strong> exige mantener los datos actualizados en todo
+    momento mientras se retengan. <strong>Un snapshot congelado incumple.</strong></li>
+    <li><strong>PMC</strong> obliga a mantener la versión más actual <em>o</em> hacer
+    constar de forma clara y visible que el producto puede no reflejarla.</li>
+    <li><strong>VA/DoD</strong>: una guía retirada que siga viva en la Bóveda es exposición
+    por información sanitaria errónea.</li>
+  </ul>
+</section>
+
+<section id="tesis">
+  <h2 class="sec"><i>06</i>El veredicto de la tesis</h2>
+  <p class="lead">Probada en 4 dominios clínicos. El resultado modifica la tesis en vez de
+  confirmarla.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Qué</th><th>Reconstruible sin tocar una guía</th></tr></thead>
+    <tbody>
+      <tr><td>Tamaños de efecto, intervalos, ventanas de elegibilidad, dosis</td><td class="num"><strong>85–95 %</strong></td></tr>
+      <tr><td>Mecanismos fisiopatológicos</td><td class="num"><strong>95–100 %</strong></td></tr>
+      <tr><td><strong>La frase normativa, el umbral, la etiqueta de Clase y Nivel</strong></td><td class="num"><strong>0 %</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>Ese 0 % <strong>no es un problema de licencia</strong>: no son datos, son el juicio
+  editorial del panel. <strong>Ninguna cantidad de dinero lo cambia, porque licenciar da
+  derecho a copiarlo, no a derivarlo.</strong> Y es exactamente lo que la cita verbatim sí
+  permite reproducir.</p>
+
+  <h3>Huecos de evidencia, no de licencia</h3>
+  <ul>
+    <li><strong>Los umbrales de suspensión no existen.</strong> Nadie aleatorizó a suspender
+    el fármaco: ni DAPA-CKD, ni CREDENCE, ni EMPA-KIDNEY.</li>
+    <li><strong>El orden de los cuatro pilares de la IC-FEr</strong>: ningún ensayo comparó
+    secuencias. El algoritmo de secuenciación es consenso.</li>
+    <li><strong>Los megaensayos previos a 2007 no tienen sección de resultados</strong>
+    (RALES, CIBIS-II, MERIT-HF, COPERNICUS, ALLHAT, UKPDS). Dos de los cuatro pilares caen
+    aquí, y sus artículos primarios están en revistas cerradas.</li>
+    <li>El <strong>bisoprolol no tiene indicación de IC aprobada en EE. UU.</strong>, así
+    que su etiqueta CC0 no contiene nada de CIBIS-II.</li>
+  </ul>
+  <p>La investigación <strong>descartó 94 identificadores</strong> (NCT, PMID, DOI) por no
+  poder verificarlos. Están fuera a propósito.</p>
+</section>
+
+<section id="cita148">
+  <h2 class="sec"><i>07</i>El artículo 148, cuantificado</h2>
+  <p class="lead">Se mencionó cinco veces en la sesión y nunca se cuantificó.</p>
+  <p><strong>No existe límite cuantitativo mexicano</strong>, y no por falta de búsqueda.
+  No hay tesis ni jurisprudencia del PJF sobre «reproducción simulada y sustancial», no hay
+  criterio publicado del INDAUTOR, y la doctrina mexicana lo reconoce expresamente.</p>
+  <p class="quote">El criterio operativo real no es el volumen: es la <strong>densidad y la
+  contigüidad</strong>. Los pasajes no deben ser <strong>«tantos y seguidos»</strong>.
+  Cuarenta frases dispersas en doscientas páginas son una cita; cincuenta consecutivas de
+  una sección son esa sección con comillas.</p>
+  <p><strong>Se mide sobre la obra citada, no sobre la citante.</strong> Que las citas sean
+  el 1 % de ORIONS es irrelevante si son el núcleo normativo de la guía.</p>
+  <p><strong>Techo adoptado:</strong> 1 000 palabras por obra, de la ley argentina 11.723
+  art. 10, el único número legislado de la región, precisamente por conservador.</p>
+
+  <h3>Las siete reglas duras</h3>
+  <ol class="body">
+    <li>Las cuatro condiciones del art. 148 son <strong>conjuntas</strong>. Fallar una anula
+    la excepción completa.</li>
+    <li>Se mide sobre la obra citada.</li>
+    <li>Densidad y contigüidad antes que volumen.</li>
+    <li><strong>Cubre solo texto.</strong> Tablas como objeto gráfico, figuras, algoritmos y
+    diagramas quedan fuera.</li>
+    <li><strong>Traducir no es citar.</strong> Es obra derivada (art. 27). El bloque de
+    KDIGO se queda en inglés; la explicación propia va en español alrededor. Es la
+    restricción de producto más incómoda y no tiene vuelta.</li>
+    <li>La atribución debe ser <strong>adyacente y no suprimible</strong>. Una cita con la
+    fuente escondida en un modal es una cita sin fuente.</li>
+    <li><strong>Nunca aceptar clickwrap ni crear cuenta</strong> en el sitio del titular: un
+    contrato aceptado <strong>desplaza</strong> la excepción legal y convierte un reclamo de
+    infracción en incumplimiento de contrato, que es peor.</li>
+  </ol>
+</section>
+
+<section id="rutas">
+  <h2 class="sec"><i>08</i>Rutas de acceso</h2>
+  <p class="lead">Lo accionable. Todo costo cero.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Ruta</th><th>Estado</th><th>Costo</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td><strong>KDIGO no comercial</strong></td><td><span class="chip v">confirmada</span></td><td class="num">0</td><td>Ninguna. En capa no monetizada la ruta está completa hoy, sin carta y sin pago.</td></tr>
+      <tr><td><strong>KDIGO comercial</strong></td><td><span class="chip a">ruta clara</span></td><td>sin precio público</td><td>Escribir a la COO pidiendo por escrito: confirmación de que el uso cae en CC BY-NC-ND, <em>o</em> permiso educativo sin costo. Verificar el contacto en el PDF más reciente: cambia por año.</td></tr>
+      <tr><td><strong>ADA</strong></td><td><span class="chip a">probable</span></td><td>sin tarifa pública</td><td><code>permissions@diabetes.org</code> al Permissions Editor. <strong>No pedir licencia de ingestión: pedir <em>display verbatim atribuido</em>.</strong> Su aviso ya contempla «post, display, or distribute».</td></tr>
+      <tr><td><strong>Vía mexicana</strong></td><td><span class="chip v">confirmada</span></td><td class="num">0</td><td>Solicitud de transparencia por la PNT a la Secretaría de Salud para el Catálogo Maestro. Si CENETEC está suspendido, es la puerta que no depende de que nadie conteste un correo.</td></tr>
+      <tr><td><strong>Art. 148</strong></td><td><span class="chip v">autoejecutable</span></td><td class="num">0</td><td>No hay a quién escribirle. Si la cita cabe en el límite, se usa.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><p class="k">La contraprestación que no cuesta dinero</p>
+  <p>La ADA misma describió en su acuerdo con OpenEvidence el valor de identificar qué
+  información buscan más los profesionales y qué temas elevar al comité de guías. ORIONS
+  puede ofrecer lo mismo en un segmento que la ADA <strong>no tiene medido</strong>: qué
+  preguntan y dónde fallan los estudiantes e internos mexicanos.</p></div>
+</section>
+
+<section id="construido">
+  <h2 class="sec"><i>09</i>Lo construido</h2>
+  <p class="lead">6 012 líneas de harness · 3 417 de pruebas · 823 aserciones · 0 fallos ·
+  sin dependencias externas.</p>
+  <p>Sin dependencias a propósito: una bóveda clínica que se vuelve inauditable porque su
+  cadena de dependencias cambió no sirve.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Módulo</th><th class="n">Líneas</th><th>Qué resuelve</th></tr></thead>
+    <tbody>
+      <tr><td><code>numeros.py</code></td><td class="n">719</td><td><strong>Equivalencia semántica</strong> de magnitudes. <code>HR 0.61</code> ≡ <code>0,61</code> ≡ «reducción del 39 %», pero <code>HR 0.61</code> ≠ <code>RRR 61 %</code>. <code>NNT 20</code> vs <code>RRR 39 %</code> → INCOMPARABLE: decirlo vale más que fabricar un acuerdo.</td></tr>
+      <tr><td><code>anclar.py</code></td><td class="n">768</td><td>Verificación contra fuentes. Un ancla solo queda verificada cuando el número <strong>se encuentra en el documento y coincide</strong>. Guarda la ruta exacta para repetir la comprobación sin confiar en el sistema.</td></tr>
+      <tr><td><code>atestiguar.py</code></td><td class="n">654</td><td>Cuarentena de 5 estados. Diversidad de encuadre, <strong>sonda falsa</strong>, procedencia coherente, abstención alta, mecanismo opuesto.</td></tr>
+      <tr><td><code>fuentes.py</code></td><td class="n">533</td><td><strong>Compuerta de licencias</strong> en el camino de ingesta. Falla cerrado.</td></tr>
+      <tr><td><code>coherencia.py</code></td><td class="n">499</td><td><strong>Cierre aritmético.</strong></td></tr>
+      <tr><td><code>cita.py</code></td><td class="n">481</td><td><strong>Cita verbatim.</strong> El bloque que el modelo no puede reescribir.</td></tr>
+      <tr><td><code>grafo.py</code></td><td class="n">463</td><td>Grafo de mecanismos con <strong>propagación de signo</strong>: el producto de los signos predice la dirección del efecto, así que una cadena causal se audita por código.</td></tr>
+      <tr><td><code>prompts.py</code></td><td class="n">417</td><td>Los 6 encuadres de elicitación. Rutas de recuperación distintas, no paráfrasis.</td></tr>
+      <tr><td><code>independencia.py</code></td><td class="n">407</td><td>Controles contra ser espejo de una guía: umbrales sintéticos, gradaciones ajenas, orden recomputable.</td></tr>
+      <tr><td><code>extraer.py</code></td><td class="n">406</td><td>Orquestador con <strong>salida temprana</strong>.</td></tr>
+      <tr><td><code>voz.py</code></td><td class="n">361</td><td>Frontera educación / apoyo a la decisión clínica.</td></tr>
+      <tr><td><code>hecho.py</code></td><td class="n">303</td><td>La unidad atómica, anclas, poblaciones, <strong>bitácora append-only</strong> y huella.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>La jerarquía de veredictos</h3>
+  <pre>sonda falsa aceptada ─────────────────────────────► NEGRO  (no se rescata con nada)
+la aritmética no cierra ──────────────────────────► ROJO   (manda sobre consenso Y ancla)
+contradice el ancla verificada ───────────────────► NEGRO
+discrepancia de categoría en clase crítica ───────► ROJO
+&lt; 3 elicitaciones y sin ancla ────────────────────► GRIS
+cuota de consenso &lt; 60 % ─────────────────────────► ROJO
+ancla que CONFIRMA + consenso ≥67 % + ≥3 encuadres► VERDE
+extracción directa verificada byte a byte ────────► VERDE  (+ falta 2ª lectura)
+sin ancla pero cierre aritmético ≥3 relaciones ───► ÁMBAR alto, mostrable</pre>
+  <p>Solo VERDE y ÁMBAR se muestran. Y para <strong>clases clínicas críticas</strong>
+  (dosis, concentración, presión, filtrado) <strong>no existe el modo «no anclado»</strong>:
+  o está en la etiqueta del regulador, o no se enseña.</p>
+</section>
+
+<section id="boveda">
+  <h2 class="sec"><i>10</i>La Bóveda real</h2>
+  <p class="lead">5 hechos clínicos reales, cada cifra leída del texto de un artículo de
+  acceso abierto y verificada byte a byte.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Magnitud</th><th>Ancla</th><th>Ruta</th><th>Veredicto</th></tr></thead>
+    <tbody>
+      <tr><td class="num">HR 0.57 (0.48–0.67)</td><td class="num">PMC8591237.1</td><td class="num">offset 17850</td><td><span class="chip v">verde 0.85</span></td></tr>
+      <tr><td class="num">RR 0.63 (0.58–0.69)</td><td class="num">PMC7613836.1</td><td class="num">offset 6438</td><td><span class="chip v">verde 0.85</span></td></tr>
+      <tr><td class="num">HR 0.66 (0.58–0.75)</td><td class="num">PMC9491404.1</td><td class="num">offset 16920</td><td><span class="chip v">verde 0.85</span></td></tr>
+      <tr><td class="num">HR 0.70 (0.58–0.83)</td><td class="num">PMC8591237.1</td><td class="num">offset 3406</td><td><span class="chip v">verde 0.85</span></td></tr>
+      <tr><td class="num">HR 0.86 (0.77–0.96)</td><td class="num">PMC9491404.1</td><td class="num">offset 14414</td><td><span class="chip v">verde 0.85</span></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>El sexto no entró</strong>: su artículo es CC BY-NC-ND y la compuerta lo
+  rechazó <em>antes de leer el contenido</em>. La compuerta no es decorativa.</p>
+  <p>Orden por la <strong>función canónica recomputable</strong> (magnitud de efecto →
+  amplitud del intervalo → fecha del ancla). Un orden recomputable <strong>se
+  demuestra</strong>; uno ajustado a mano hay que justificarlo, y esa es la pregunta que no
+  conviene tener que contestar.</p>
+</section>
+
+<section id="bugs">
+  <h2 class="sec"><i>11</i>Los 20 bugs</h2>
+  <p class="lead">6 solo aparecen con texto real. 6 los encontró el análisis adversarial
+  leyendo el código. 1 lo encontró el propio auditor del grafo. 7 las pruebas.</p>
+  <div class="scroll"><table>
+    <thead><tr><th class="n">#</th><th>Bug</th><th>Quién</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td><strong>Punto medio decimal</strong> (<code>0·63</code>, estilo Lancet) → devolvía <code>0</code>. No fallaba: devolvía un número plausible y equivocado. <strong>Corrupción silenciosa.</strong></td><td>datos reales</td></tr>
+      <tr><td class="n">2</td><td><code>HR 0.66, 95% CI 0.58-0.75</code> <strong>perdía el intervalo</strong></td><td>datos reales</td></tr>
+      <tr><td class="n">3</td><td><strong><code>"relative risk"</code> ausente de los alias.</strong> La suite estaba sesgada al español.</td><td>datos reales</td></tr>
+      <tr><td class="n">4</td><td>El corchete de <code>relative risk [RR] 0.63</code> rompía el enlace alias-número</td><td>datos reales</td></tr>
+      <tr><td class="n">5</td><td>Numeración de sección FDA (<code>2.1 Recommended Dosage</code>) → <strong>dosis de 2.1 mg</strong></td><td>datos reales</td></tr>
+      <tr><td class="n">6</td><td><code>CC BY-NC-ND 4.0</code>: la detección de ND fallaba porque el split dejaba <code>"nd 4.0"</code></td><td>datos reales</td></tr>
+      <tr><td class="n">7</td><td><strong>Factor de alarma fijo en 10</strong> → una <strong>dosis doble pasaba como imprecisión</strong></td><td>adversarial</td></tr>
+      <tr><td class="n">8</td><td><code>mostrable()</code> True para todo ÁMBAR → <strong>una dosis sin ancla con confianza 0.31 entraba al mazo de repetición espaciada</strong>, cuyo propósito es que se retenga</td><td>adversarial</td></tr>
+      <tr><td class="n">9</td><td><code>aplicar()</code> sobrescribía sin bitácora → imposible acreditar qué se mostró</td><td>adversarial</td></tr>
+      <tr><td class="n">10</td><td>Un ancla <strong>INCOMPARABLE</strong> acreditaba VERDE: un hecho «anclado» contra una cifra de otra clase</td><td>adversarial</td></tr>
+      <tr><td class="n">11</td><td><code>_representante</code> <strong>fabricaba magnitudes compuestas</strong>: punto de una fuente, intervalo de otra</td><td>adversarial</td></tr>
+      <tr><td class="n">12</td><td>La cuarentena era <strong>solo de pantalla</strong>: la cifra repudiada quedaba en el campo principal</td><td>adversarial</td></tr>
+      <tr><td class="n">13</td><td><strong>3 aristas con el signo invertido</strong> en la cadena causal del iSGLT2. El producto daba que el fármaco <em>empeora</em> la ERC. <strong>Ninguna persona lo notó.</strong></td><td>el propio grafo</td></tr>
+      <tr><td class="n">14</td><td>Rama de rango sin guarda contra clase sin resolver</td><td>pruebas</td></tr>
+      <tr><td class="n">15</td><td>El detector de ciclos bloqueado por la guarda anti-revisita</td><td>pruebas</td></tr>
+      <tr><td class="n">16</td><td>El orden del texto importaba: <code>hazard ratio 0.61</code> sí, <code>0.61 hazard ratio</code> no</td><td>pruebas</td></tr>
+      <tr><td class="n">17</td><td><code>aplicar()</code> <strong>asignaba</strong> el diagnóstico en vez de actualizarlo. Síntoma: un control gritando en falso sobre hechos correctos. <strong>La peor clase de bug: no rompe el producto, hace que dejes de creerle al control.</strong></td><td>pruebas</td></tr>
+      <tr><td class="n">18</td><td><code>fuente_de_ancla</code> devolvía la primera del catálogo, y donde varias comparten tipo <strong>la primera es la inusable</strong></td><td>pruebas</td></tr>
+      <tr><td class="n">19</td><td>El piso de confianza mordía VERDE: doble conteo de las compuertas duras</td><td>pruebas</td></tr>
+      <tr><td class="n">20</td><td>Orden de campos del dataclass</td><td>pruebas</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="legal">
+  <h2 class="sec"><i>12</i>El análisis legal adversarial</h2>
+  <p class="lead">6 ataques, cada uno desde la posición del abogado de la parte contraria.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Ataque</th><th>Veredicto</th><th>Riesgo residual</th></tr></thead>
+    <tbody>
+      <tr><td>Obra derivada / selección y disposición</td><td>sobrevive con condiciones</td><td><span class="chip a">medio</span></td></tr>
+      <tr><td>El grafo de mecanismos como paráfrasis</td><td>sobrevive con condiciones</td><td><span class="chip a">medio</span></td></tr>
+      <tr><td><strong>La indemnización del proveedor de IA</strong></td><td><strong>refutada</strong></td><td><span class="chip r">alto</span></td></tr>
+      <tr><td><strong>El archivo que sube el estudiante</strong></td><td><strong>refutada</strong></td><td><span class="chip a">medio</span></td></tr>
+      <tr><td>Software como dispositivo médico</td><td>sobrevive con condiciones</td><td><span class="chip a">medio</span></td></tr>
+      <tr><td>Responsabilidad civil por cifra mal derivada</td><td>sobrevive con condiciones</td><td><span class="chip r">alto</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Lo que hay que abandonar</h3>
+  <p><strong>La ruta de «el estudiante sube su guía».</strong> El escenario que la mata no
+  pasa por un tribunal: un despacho compra <strong>una</strong> suscripción, un pasante sube
+  el PDF y <strong>graba la pantalla</strong>. Ese video es el expediente completo. Después,
+  tres disparos simultáneos y gratuitos: notificación al <strong>proveedor de
+  infraestructura</strong> (el equipo de abuse no litiga, aplica su política, 24–72 h), queja
+  ante <strong>App Review de Apple y Google Play</strong>, y carta a la <strong>pasarela de
+  pagos</strong>. El puerto seguro es jurídicamente irrelevante frente a un contrato privado
+  de hosting.</p>
+  <p>Única versión viable: <strong>exclusivamente en cliente</strong> (WASM, cero copia en
+  servidor), y lo único que cruza la red son identificadores de una ontología propia.</p>
+
+  <h3>La indemnización del proveedor: trátala como inexistente</h3>
+  <p>La de Anthropic cubre solo <em>paid use</em>; los servicios en Beta se entregan
+  <strong>expresamente sin indemnización</strong>, con tope en el menor entre USD 1 000 y 12
+  meses de fees. Google define el servicio indemnizado como el que no se provee gratis.
+  <strong>Lanzar con créditos de programa startup y un modelo en preview = cero
+  indemnización.</strong> La red no se rompe: nunca se tendió.</p>
+  <div class="callout warn"><p class="k">Regla</p><p>Ninguna decisión de producto puede
+  justificarse con «el proveedor nos cubre». Si una función solo es aceptable asumiendo la
+  indemnización, esa función no se construye.</p></div>
+
+  <h3>Dato que invierte el ranking de riesgo</h3>
+  <p><strong>KDIGO es una fundación belga</strong> y la <strong>ESC está en Francia</strong>.
+  Eso les da el <strong>derecho sui generis de bases de datos</strong> europeo (directiva
+  96/9/CE art. 11), que <strong>no requiere ninguna originalidad</strong>: basta inversión
+  sustancial. La ADA y la AHA/ACC, al ser estadounidenses, <strong>no lo tienen</strong>.</p>
+  <p>Contraintuitivo: <strong>KDIGO y ESC son más peligrosas que ADA y AHA</strong> —aunque
+  KDIGO sea también la que ya concedió la licencia abierta. Las dos cosas a la vez.</p>
+
+  <h3>Google Vertex y Gemini quedan fuera</h3>
+  <p>Sus Service Specific Terms 20(e) prohíben usar los servicios de IA generativa con fines
+  clínicos, y 20(g) lo convierte en <em>Use Restriction</em> cuyo incumplimiento rompe el
+  acuerdo.</p>
+
+  <h3>El punto más incómodo</h3>
+  <p>El análisis de responsabilidad civil señaló que <strong>la propia documentación se
+  vuelve prueba en contra</strong>: «los umbrales son decisiones de producto razonadas, no
+  constantes derivadas de datos» + «subirlos reduce cobertura y aumenta precisión» equivale a
+  que la empresa <strong>documentó que pudo ser más segura y eligió cobertura</strong>.</p>
+  <div class="callout"><p class="k">La lección correcta</p>
+  <p>No es dejar de documentar con honestidad. Es <strong>no embarcar la configuración que
+  tu honestidad describe como insegura</strong>. «Elegimos cobertura sobre precisión en
+  dosis» es condenatorio; «las dosis exigen ancla de regulador, factor de alarma 1.6 y
+  bitácora de exhibición, y aquí está la medición» es exculpatorio. Por eso el trabajo fue
+  cerrar las compuertas, no suavizar el texto.</p></div>
+</section>
+
+<section id="regulatorio">
+  <h2 class="sec"><i>13</i>La frontera regulatoria</h2>
+  <p class="lead">Es más urgente que el riesgo de derechos de autor.</p>
+  <p>Una demanda se pelea; una clasificación como software de apoyo a la decisión clínica
+  sin registro sanitario <strong>cierra el producto por vía administrativa</strong> sin que
+  nadie gane un juicio.</p>
+  <p>La frontera no la fija el contenido: la fijan <strong>la voz y el referente</strong>, y
+  las dos son verificables.</p>
+  <pre>"Para mi paciente debe iniciar un iSGLT2, es el de primera linea"
+  del lado educativo: NO
+   - NORMATIVO_SIN_ATRIBUIR  | debe
+   - NORMATIVO_SIN_ATRIBUIR  | primera linea
+   - REFERENTE_INDIVIDUAL    | mi paciente
+   - VISTA_COLAPSADA, DERIVACION_OCULTA, ANCLAS_OCULTAS, SALIDA_UNICA
+
+"Segun NOM-030-SSA2-2009 (numeral 7.4, 2009): en adultos con ERC y
+ albuminuria se recomienda un iSGLT2."
+  del lado educativo: SÍ</pre>
+  <p>Misma cifra, lados distintos. El criterio central de la guía de la FDA
+  (§520(o)(1)(E) de la FD&amp;C Act) es que el profesional pueda <strong>revisar
+  independientemente las bases</strong> de la recomendación. Así que la vista de «respuesta
+  rápida» no es una preferencia de diseño: <strong>es la que cruza la frontera</strong>.</p>
+  <p>El enum de referente es <strong>cerrado</strong>. <strong>No existe el valor
+  <code>paciente</code></strong>, y agregarlo no es una decisión de ingeniería: es un cambio
+  de categoría regulatoria del producto entero.</p>
+  <div class="callout warn"><p class="k">Consecuencia que conviene aceptar de frente</p>
+  <p>ORIONS no puede tener un botón de «dime qué hacer». Es la función más pedida y la más
+  vendible, y es exactamente la que convierte la plataforma en un dispositivo médico sin
+  registro.</p></div>
+</section>
+
+<section id="pendiente">
+  <h2 class="sec"><i>14</i>Lo que NO está verificado</h2>
+  <p class="lead">El valor de este sistema depende de que la distinción entre verificado y
+  no verificado se respete también aquí.</p>
+  <div class="scroll"><table>
+    <tbody>
+      <tr><td><strong>El adaptador HTTP está probado a medias.</strong></td><td>Ejecutado contra PMC (17 registros reales). <strong>Falta ClinicalTrials.gov y openFDA</strong>, que la política de egress bloquea con 403. Las anclas más fuertes —registro de ensayo y etiqueta de regulador— <strong>no se han ejercitado ni una vez</strong>.</td></tr>
+      <tr><td><strong>Los PDF primarios de KDIGO no se leyeron.</strong></td><td>Su front matter lleva una nota más estricta (<em>«no part of this publication may be reproduced… without explicit permission in writing»</em>) <strong>en tensión</strong> con la nota de acceso abierto. Y la guía 2024 de ERC <strong>no es homogénea</strong>: capítulos individuales bajo otras licencias. <strong>Antes de citar nada hay que leer la página de copyright de la sección exacta.</strong></td></tr>
+      <tr><td><strong>Terminologías y libros abiertos: sin verificar.</strong></td><td>Por bloqueo de red, no por ambigüedad. Si StatPearls lleva NonCommercial + NoDerivatives es doblemente inusable. Si México no es miembro de SNOMED International, SNOMED CT es inviable con presupuesto cero.</td></tr>
+      <tr><td><strong>El Catálogo Maestro puede no existir.</strong></td><td>Verificación pendiente de más valor de todo el expediente: de ella depende la viabilidad de la capa mexicana.</td></tr>
+      <tr><td><strong>Los umbrales de atestiguación no están calibrados.</strong></td><td><code>consenso ≥67 %</code>, <code>≥3 encuadres</code>, <code>piso 0.5</code> son decisiones razonadas. Los del <strong>cierre aritmético sí</strong> se calibraron con 5 cifras reales.</td></tr>
+      <tr><td><strong>La tasa de salida temprana no está medida.</strong></td><td>El ahorro de llamadas es una estimación de arquitectura.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="plan">
+  <h2 class="sec"><i>15</i>Plan de acción</h2>
+
+  <h3>Esta semana · todo costo cero</h3>
+  <ol class="body">
+    <li><strong>Verificar si el Catálogo Maestro sigue vivo.</strong> Decide la viabilidad de
+    la capa mexicana. Una tarde.</li>
+    <li><strong>Solicitud de transparencia</strong> a la Secretaría de Salud por la PNT.</li>
+    <li><strong>Leer la página de copyright del PDF de KDIGO</strong> de la guía exacta,
+    capítulo por capítulo. Antes de citar nada.</li>
+    <li><strong>Correo a KDIGO y a <code>permissions@diabetes.org</code></strong>. Pedir
+    <em>display verbatim atribuido</em>, no licencia de ingestión.</li>
+    <li><strong>Correr el adaptador HTTP contra ClinicalTrials.gov y openFDA</strong> desde
+    una red sin esta política de egress.</li>
+  </ol>
+
+  <h3>Mes 1 · medir antes de escalar</h3>
+  <ol class="body" start="6">
+    <li><strong>Calibrar los umbrales</strong>: 20 hechos de respuesta conocida, medir
+    cuántos llegan a VERDE, cuántos a NEGRO y <strong>cuántos NEGRO son falsos
+    positivos</strong>. Sin esta medición los umbrales son una opinión —y una opinión
+    documentada como tal es prueba en contra.</li>
+    <li><strong>El cosechador de PMC.</strong> El cuello de botella ya no es el diseño: es
+    que cada hecho requiere encontrar a mano el PMCID de un artículo CC-BY con la cifra. El
+    <strong>inventario diario del bucket</strong> permite filtrar por licencia <em>antes</em>
+    de descargar, así que se puede barrer el subconjunto CC-BY de una especialidad. Convierte
+    «buscar a mano» en «cosechar lo admisible».</li>
+    <li><strong>Un dominio completo</strong>: ERC con diabetes, ~40 hechos y ~60 aristas.</li>
+    <li><strong>Sincronización delta de ClinicalTrials.gov.</strong> Es obligación
+    contractual, no mejora opcional.</li>
+  </ol>
+
+  <h3>Mes 2–3</h3>
+  <ol class="body" start="10">
+    <li><strong>La capa que nadie tiene</strong>: el delta México. Es lo que ninguna fuente
+    internacional cubre, es trabajo original, <strong>y el art. 14 fr. VIII la protege como
+    obra tuya</strong>: el único artículo del expediente que te da un activo y no solo un
+    permiso.</li>
+    <li><strong>Generación de preguntas desde el grafo</strong>, con la cola de revisión en
+    manos de un médico. Medir <strong>minutos de médico por hecho aceptado</strong>: ese
+    número decide si el modelo escala.</li>
+  </ol>
+</section>
+
+<section id="riesgos">
+  <h2 class="sec"><i>16</i>Riesgos abiertos</h2>
+  <p class="lead">En orden de urgencia.</p>
+  <ol class="body">
+    <li><strong>Regulatorio.</strong> Puede cerrar el producto sin juicio. Mitigación
+    construida, pero sin validar con nadie que conozca COFEPRIS.</li>
+    <li><strong>El Catálogo Maestro.</strong> Si no existe, la capa que distingue a ORIONS en
+    México no tiene fuente estructurada, y es justo lo que el ENARM evalúa.</li>
+    <li><strong>Responsabilidad civil.</strong> Riesgo residual alto incluso con las
+    compuertas cerradas. No hay sentencia firme en ninguna jurisdicción que condene a un
+    proveedor de información clínica, pero tampoco hay precedente que proteja.</li>
+    <li><strong>La no homogeneidad de las licencias de KDIGO.</strong> Un capítulo bajo otra
+    licencia convierte una cita lícita en una infracción.</li>
+    <li><strong>El cuello de botella de contenido.</strong> 5 hechos y hacen falta cientos.</li>
+  </ol>
+
+  <h3>En una línea</h3>
+  <p class="quote">La Bóveda no es un espejo de las guías: es un <strong>sistema de
+  medición</strong> de hechos clínicos, con tres vías de confianza —ancla pública verificada,
+  extracción directa byte a byte, y cierre aritmético sin fuente externa— más una cuarta que
+  la sesión descubrió al final y que resultó ser la más simple: <strong>citar la
+  recomendación palabra por palabra, que es a la vez lo que la licencia permite y lo único
+  que el modelo no puede inventar</strong>.</p>
+</section>
+
+<footer>
+  <p>Informe generado el 28 de octubre de 2026. Nada de lo legal aquí es dictamen: está
+  escrito para que un abogado de propiedad intelectual lo revise rápido y barato, porque las
+  preguntas ya están acotadas y las fuentes citadas.</p>
+</footer>
+</main>
+</div>
+</div>
