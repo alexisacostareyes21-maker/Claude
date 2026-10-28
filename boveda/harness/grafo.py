@@ -143,6 +143,7 @@ class TipoContradiccion(str, Enum):
     RUTAS_OPUESTAS = "rutas_opuestas"           # dos rutas con signo neto contrario
     HECHO_CONTRA_RUTA = "hecho_contra_ruta"     # un hecho observado contradice la prediccion
     CICLO_POSITIVO = "ciclo_positivo"           # retroalimentacion amplificadora
+    RUTA_UNICA_SIN_AUDITO = "ruta_unica_sin_audito"  # no se pudo cotejar: una sola ruta
 
 
 @dataclass
@@ -298,7 +299,17 @@ class Grafo:
                 if o == d:
                     continue
                 rs = self.rutas(o, d, max_largo=6)
+                if not rs:
+                    continue
                 if len(rs) < 2:
+                    out.append(Contradiccion(
+                        tipo=TipoContradiccion.RUTA_UNICA_SIN_AUDITO,
+                        detalle=(f"entre {self._nombre(o)} y {self._nombre(d)} hay una sola "
+                                 f"ruta: el cotejo de signos opuestos no comprobo nada aqui, "
+                                 f"y la ausencia de contradiccion no es evidencia de acierto"),
+                        implicados=[o, d],
+                        gravedad="informativa",
+                    ))
                     continue
                 if len({r.signo for r in rs}) > 1:
                     out.append(Contradiccion(
@@ -332,6 +343,37 @@ class Grafo:
                     gravedad="alta",
                 ))
         return out
+
+    def cobertura_de_audito(self) -> dict:
+        """Que fraccion de los pares intervencion-desenlace pudo cotejarse.
+
+        El cotejo de rutas opuestas solo dice algo cuando hay al menos dos
+        rutas. Un grafo de rutas unicas pasa el auditor entero sin que el
+        auditor haya comprobado una sola cosa, asi que la cifra que importa no
+        es cuantas contradicciones salieron: es sobre cuantos pares habia con
+        que contradecirse.
+        """
+        origenes = [nid for nid, nd in self.nodos.items()
+                    if nd.nivel in (Nivel.FARMACO, Nivel.MOLECULAR)]
+        destinos = [nid for nid, nd in self.nodos.items() if nd.nivel is Nivel.CLINICO]
+        conectados = 0
+        auditables = 0
+        for o in origenes:
+            for d in destinos:
+                if o == d:
+                    continue
+                rs = self.rutas(o, d, max_largo=6)
+                if not rs:
+                    continue
+                conectados += 1
+                if len(rs) >= 2:
+                    auditables += 1
+        return {
+            "pares_conectados": conectados,
+            "pares_auditables": auditables,
+            "pares_sin_audito": conectados - auditables,
+            "cobertura": (auditables / conectados) if conectados else 0.0,
+        }
 
     def _nombre(self, nid: str) -> str:
         n = self.nodos.get(nid)

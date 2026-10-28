@@ -222,6 +222,62 @@ def test_explicar_es_legible():
     ok(txt.count("\n") == 3, f"una linea por arista mas el neto: {txt.count(chr(10))}")
 
 
+def test_ruta_unica_no_pasa_en_silencio():
+    """Un par con una sola ruta no se puede cotejar, y callarlo era el bug.
+
+    El cotejo de rutas opuestas solo dice algo cuando hay dos rutas. Antes, un
+    par con una sola ruta hacia `continue` y no dejaba rastro, asi que aguas
+    abajo el silencio se leia como "cotejado y sin contradiccion". No lo era:
+    no habia con que cotejar. Es la misma familia del bug del diagnostico que
+    se asignaba en vez de actualizarse: el control no rompe el producto, hace
+    que le creas cuando no comprobo nada.
+    """
+    g = Grafo()
+    a = g.agregar_nodo(Nodo("farmaco U", Nivel.FARMACO))
+    b = g.agregar_nodo(Nodo("via V", Nivel.MOLECULAR))
+    c = g.agregar_nodo(Nodo("desenlace T", Nivel.CLINICO))
+    g.agregar_arista(Arista(a, b, Signo.DISMINUYE, confianza=0.9))
+    g.agregar_arista(Arista(b, c, Signo.DISMINUYE, confianza=0.9))
+
+    cs = g.contradicciones()
+    unicas = [c for c in cs
+              if c.tipo is TipoContradiccion.RUTA_UNICA_SIN_AUDITO]
+    ok(len(unicas) >= 1,
+       "un par con una sola ruta debe reportarse como no auditado, no pasar "
+       f"en silencio (salieron {len(cs)} hallazgos)")
+    ok(all(u.gravedad == "informativa" for u in unicas),
+       "y su gravedad es informativa: no es una contradiccion, es la ausencia "
+       "de comprobacion")
+    ok(any("no comprobo nada" in u.detalle for u in unicas),
+       "el detalle debe decir que el cotejo no comprobo nada aqui")
+
+
+def test_cobertura_de_audito():
+    """La cifra que importa no es cuantas contradicciones salieron."""
+    g = Grafo()
+    a = g.agregar_nodo(Nodo("farmaco P", Nivel.FARMACO))
+    b = g.agregar_nodo(Nodo("via Q", Nivel.MOLECULAR))
+    c = g.agregar_nodo(Nodo("desenlace R", Nivel.CLINICO))
+    g.agregar_arista(Arista(a, b, Signo.DISMINUYE))
+    g.agregar_arista(Arista(b, c, Signo.DISMINUYE))
+
+    cob = g.cobertura_de_audito()
+    ok(cob["pares_conectados"] >= 1, "hay al menos un par conectado")
+    ok(cob["pares_auditables"] == 0,
+       f"con una sola ruta no hay nada auditable: {cob}")
+    ok(cob["cobertura"] == 0.0,
+       "y la cobertura es 0.0, que es el numero que antes no existia: un grafo "
+       "de rutas unicas pasaba el auditor entero sin que el auditor comprobara "
+       "una sola cosa")
+
+    # Una segunda ruta entre el mismo par lo vuelve auditable.
+    g.agregar_arista(Arista(a, c, Signo.DISMINUYE))
+    cob2 = g.cobertura_de_audito()
+    ok(cob2["pares_auditables"] >= 1,
+       f"con dos rutas el par ya es auditable: {cob2}")
+    ok(cob2["cobertura"] > 0.0, "y la cobertura sube")
+
+
 def main():
     for t in [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]:
         try:
