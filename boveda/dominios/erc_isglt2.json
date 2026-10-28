@@ -1,0 +1,813 @@
+{
+  "dominio": "inhibidores de SGLT2 en enfermedad renal cronica",
+  "construido": "2026-10-28",
+  "fuente_primaria": "PMC Cloud Service, s3://pmc-oa-opendata",
+  "aviso_terminos": "Los terminos del dataset de PMC obligan a mantener la version mas actual de los datos redistribuidos o a hacer constar que el producto puede no reflejarla. Se hace constar: este archivo es una instantanea del 2026-10-28 y puede no reflejar los datos mas actuales de la NLM.",
+  "n_hechos": 6,
+  "n_publicables": 5,
+  "anclaje": [
+    {
+      "clave": "renal-compuesto-dm",
+      "pmcid": "PMC9491404",
+      "verificada": true,
+      "ruta": "PMC9491404.1.txt offset 16920",
+      "motivo": "coincide (identico) en PMC9491404.1.txt offset 16920. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros",
+      "licencia": "CC BY (PMC OA)"
+    },
+    {
+      "clave": "mortalidad-total-dm",
+      "pmcid": "PMC9491404",
+      "verificada": true,
+      "ruta": "PMC9491404.1.txt offset 14414",
+      "motivo": "coincide (identico) en PMC9491404.1.txt offset 14414. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros",
+      "licencia": "CC BY (PMC OA)"
+    },
+    {
+      "clave": "renal-egfr-bajo",
+      "pmcid": "PMC8591237",
+      "verificada": true,
+      "ruta": "PMC8591237.1.txt offset 3406",
+      "motivo": "coincide (identico) en PMC8591237.1.txt offset 3406. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros",
+      "licencia": "CC BY (PMC OA)"
+    },
+    {
+      "clave": "renal-macroalbuminuria",
+      "pmcid": "PMC8591237",
+      "verificada": true,
+      "ruta": "PMC8591237.1.txt offset 17850",
+      "motivo": "coincide (identico) en PMC8591237.1.txt offset 17850. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros",
+      "licencia": "CC BY (PMC OA)"
+    },
+    {
+      "clave": "progresion-renal-global",
+      "pmcid": "PMC7613836",
+      "verificada": true,
+      "ruta": "PMC7613836.1.txt offset 6438",
+      "motivo": "coincide (identico) en PMC7613836.1.txt offset 6438. Advertencias de licencia: es manuscrito de autor, no la version publicada: las cifras pueden diferir de la version final; la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros",
+      "licencia": "CC BY (PMC OA)"
+    },
+    {
+      "clave": "control-licencia-rechazada",
+      "pmcid": "PMC6518930",
+      "verificada": false,
+      "ruta": "",
+      "motivo": "la compuerta de licencias rechaza PMC6518930.1: CC BY-NC-ND prohibe el uso comercial y los derivados. No se leyo el contenido",
+      "licencia": ""
+    }
+  ],
+  "independencia": {
+    "limpio": true,
+    "hallazgos": [],
+    "publicables": 6,
+    "bloqueados": 0
+  },
+  "voz": [
+    {
+      "hecho": "H259365ec217bea5d",
+      "educativo": true,
+      "hallazgos": []
+    },
+    {
+      "hecho": "Hbfe41a733acacae1",
+      "educativo": true,
+      "hallazgos": []
+    },
+    {
+      "hecho": "H400a4e2b76a7d591",
+      "educativo": true,
+      "hallazgos": []
+    },
+    {
+      "hecho": "H271eeaaba89ba33e",
+      "educativo": true,
+      "hallazgos": []
+    },
+    {
+      "hecho": "H5808a6c22055a1ea",
+      "educativo": true,
+      "hallazgos": []
+    },
+    {
+      "hecho": "H07264fc7d4767860",
+      "educativo": false,
+      "hallazgos": [
+        {
+          "codigo": "ANCLAS_OCULTAS",
+          "detalle": "la vista no expone ninguna ancla re-consultable: sin ella el profesional no puede verificar la base de forma independiente",
+          "gravedad": "alta",
+          "fragmento": ""
+        }
+      ]
+    }
+  ],
+  "hechos_publicables": [
+    {
+      "enunciado": "El beneficio renal es de mayor magnitud en el subgrupo con macroalbuminuria, segun el metaanalisis anclado.",
+      "clase": "efecto",
+      "poblacion": {
+        "condicion": "enfermedad renal cronica con macroalbuminuria",
+        "edad_min": 18,
+        "edad_max": null,
+        "inclusion": [
+          "cociente albumina creatinina elevado"
+        ],
+        "exclusion": [],
+        "nivel_atencion": "segundo nivel",
+        "pais_contexto": "internacional"
+      },
+      "magnitud": {
+        "clase": "razon_riesgo",
+        "valor": 0.57,
+        "unidad": null,
+        "ic_inf": 0.48,
+        "ic_sup": 0.67,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "The same benefit (Figure 2) occurred in patients with macroalbuminuria (reduced by 43% compared with placebo, HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+      },
+      "magnitud_en_cuarentena": null,
+      "intervencion": "inhibicion de SGLT2",
+      "comparador_clinico": "placebo",
+      "desenlace": "desenlace renal primario con macroalbuminuria",
+      "anclas": [
+        {
+          "tipo": "articulo_cc_by",
+          "localizador": "PMC8591237.1",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8591237/",
+          "magnitud": {
+            "clase": "razon_riesgo",
+            "valor": 0.57,
+            "unidad": null,
+            "ic_inf": 0.48,
+            "ic_sup": 0.67,
+            "comparador": "=",
+            "valor_sup": null,
+            "analito": null,
+            "por_dia": null,
+            "etiqueta": null,
+            "bruto": "The same benefit (Figure 2) occurred in patients with macroalbuminuria (reduced by 43% compared with placebo, HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+          },
+          "cita_corta": "The same benefit (Figure 2) occurred in patients with macroalbuminuria (reduced by 43% compared with placebo, HR 0.57, [95% CI...",
+          "fecha_consulta": "",
+          "licencia": "CC BY (PMC OA)",
+          "verificada": true
+        }
+      ],
+      "mecanismo": [
+        "menor estres mecanico sobre la barrera de filtracion",
+        "menor albuminuria",
+        "menor dano tubulointersticial"
+      ],
+      "delta_mexico": "PENDIENTE DE VERIFICAR.",
+      "trampa_enarm": "Se trata la albuminuria solo como marcador pronostico y se pasa por alto que tambien predice quien obtiene mas beneficio.",
+      "veredicto": "VERDE",
+      "confianza": 0.85,
+      "diagnostico": {
+        "justificacion": {
+          "origen": "hueco_docente",
+          "evidencia": "la albuminuria como modificador del efecto, y no solo como marcador, es un punto que la ensenanza suele omitir",
+          "peso": 0.8
+        },
+        "anclaje": [
+          {
+            "localizador": "PMC8591237.1",
+            "verificada": true,
+            "coincide": "identico",
+            "ruta": "PMC8591237.1.txt offset 17850",
+            "motivo": "coincide (identico) en PMC8591237.1.txt offset 17850. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros"
+          }
+        ],
+        "veredicto": "VERDE",
+        "confianza": 0.85,
+        "magnitud_consenso": {
+          "clase": "razon_riesgo",
+          "valor": 0.57,
+          "unidad": null,
+          "ic_inf": 0.48,
+          "ic_sup": 0.67,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "The same benefit (Figure 2) occurred in patients with macroalbuminuria (reduced by 43% compared with placebo, HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+        },
+        "n_elicitaciones": 1,
+        "n_encuadres": 1,
+        "cuota_consenso": 1.0,
+        "tasa_abstencion": 0.0,
+        "anclas_verificadas": 1,
+        "ancla_mas_fuerte": "articulo_cc_by",
+        "motivos": [
+          "la cifra se extrajo del documento anclado y coincide byte a byte con el (articulo_cc_by:PMC8591237.1). Esa es la procedencia mas fuerte posible y no necesita triangulacion. Lo que si queda pendiente es una segunda lectura que confirme que se tomo el dato correcto del documento y no un subgrupo"
+        ],
+        "alertas": [
+          "EXTRACCION_SIN_SEGUNDA_LECTURA"
+        ],
+        "grupos": [
+          [
+            "razon_riesgo:0.57 (IC95 0.48-0.67)"
+          ]
+        ]
+      },
+      "version": 1,
+      "vigente": true,
+      "historial": [
+        {
+          "momento": "2026-10-28",
+          "evento": "atestiguado",
+          "detalle": "de GRIS/0.0 a VERDE/0.85",
+          "version": 1,
+          "veredicto": "VERDE",
+          "confianza": 0.85,
+          "magnitud": "razon_riesgo:0.57 (IC95 0.48-0.67)",
+          "huella": "a880b58e8e1f4f02c1351fab"
+        }
+      ],
+      "revisar_si": [
+        "aparece un ensayo de fase 3 nuevo en esta poblacion",
+        "el articulo anclado se retracta",
+        "cambia la version del articulo en el bucket de PMC"
+      ],
+      "firmado_por": "",
+      "reemplaza": "",
+      "id": "H259365ec217bea5d",
+      "techo": "VERDE",
+      "mostrable": true,
+      "motivo_no_mostrable": "",
+      "huella": "a880b58e8e1f4f02c1351fab"
+    },
+    {
+      "enunciado": "Agrupando los ensayos cardio-renales, la asignacion a un inhibidor de SGLT2 se asocia con menor riesgo de progresion de la enfermedad renal frente a placebo, con efecto similar con y sin diabetes.",
+      "clase": "efecto",
+      "poblacion": {
+        "condicion": "enfermedad renal cronica con y sin diabetes",
+        "edad_min": 18,
+        "edad_max": null,
+        "inclusion": [],
+        "exclusion": [],
+        "nivel_atencion": "segundo nivel",
+        "pais_contexto": "internacional"
+      },
+      "magnitud": {
+        "clase": "razon_riesgo",
+        "valor": 0.63,
+        "unidad": null,
+        "ic_inf": 0.58,
+        "ic_sup": 0.69,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "Compared with placebo, allocation to an SGLT2 inhibitor reduced the risk of kidney disease progression by 37% (relative risk [RR] 0·63, 95% confidence interval 0·58-0·69) with similar RRs in patients with and without diabetes (heterogeneity p=0·31)."
+      },
+      "magnitud_en_cuarentena": null,
+      "intervencion": "inhibicion de SGLT2",
+      "comparador_clinico": "placebo",
+      "desenlace": "progresion de la enfermedad renal",
+      "anclas": [
+        {
+          "tipo": "articulo_cc_by",
+          "localizador": "PMC7613836.1",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7613836/",
+          "magnitud": {
+            "clase": "razon_riesgo",
+            "valor": 0.63,
+            "unidad": null,
+            "ic_inf": 0.58,
+            "ic_sup": 0.69,
+            "comparador": "=",
+            "valor_sup": null,
+            "analito": null,
+            "por_dia": null,
+            "etiqueta": null,
+            "bruto": "Compared with placebo, allocation to an SGLT2 inhibitor reduced the risk of kidney disease progression by 37% (relative risk [RR] 0·63, 95% confidence interval 0·58-0·69) with similar RRs in patients with and without diabetes (heterogeneity p=0·31)."
+          },
+          "cita_corta": "Compared with placebo, allocation to an SGLT2 inhibitor reduced the risk of kidney disease progression by 37% (relative risk [RR]...",
+          "fecha_consulta": "",
+          "licencia": "CC BY (PMC OA)",
+          "verificada": true
+        }
+      ],
+      "mecanismo": [
+        "menor presion intraglomerular",
+        "menor hiperfiltracion glomerular",
+        "menor progresion de la enfermedad renal cronica"
+      ],
+      "delta_mexico": "PENDIENTE DE VERIFICAR.",
+      "trampa_enarm": "Se extrapola el efecto a poblaciones sin albuminuria, donde la evidencia es mas escasa.",
+      "veredicto": "VERDE",
+      "confianza": 0.85,
+      "diagnostico": {
+        "justificacion": {
+          "origen": "densidad_ancla",
+          "evidencia": "es la estimacion agrupada de mayor tamano y la que tiene mas evidencia primaria publica detras",
+          "peso": 0.9
+        },
+        "anclaje": [
+          {
+            "localizador": "PMC7613836.1",
+            "verificada": true,
+            "coincide": "identico",
+            "ruta": "PMC7613836.1.txt offset 6438",
+            "motivo": "coincide (identico) en PMC7613836.1.txt offset 6438. Advertencias de licencia: es manuscrito de autor, no la version publicada: las cifras pueden diferir de la version final; la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros"
+          }
+        ],
+        "veredicto": "VERDE",
+        "confianza": 0.85,
+        "magnitud_consenso": {
+          "clase": "razon_riesgo",
+          "valor": 0.63,
+          "unidad": null,
+          "ic_inf": 0.58,
+          "ic_sup": 0.69,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "Compared with placebo, allocation to an SGLT2 inhibitor reduced the risk of kidney disease progression by 37% (relative risk [RR] 0·63, 95% confidence interval 0·58-0·69) with similar RRs in patients with and without diabetes (heterogeneity p=0·31)."
+        },
+        "n_elicitaciones": 1,
+        "n_encuadres": 1,
+        "cuota_consenso": 1.0,
+        "tasa_abstencion": 0.0,
+        "anclas_verificadas": 1,
+        "ancla_mas_fuerte": "articulo_cc_by",
+        "motivos": [
+          "la cifra se extrajo del documento anclado y coincide byte a byte con el (articulo_cc_by:PMC7613836.1). Esa es la procedencia mas fuerte posible y no necesita triangulacion. Lo que si queda pendiente es una segunda lectura que confirme que se tomo el dato correcto del documento y no un subgrupo"
+        ],
+        "alertas": [
+          "EXTRACCION_SIN_SEGUNDA_LECTURA"
+        ],
+        "grupos": [
+          [
+            "razon_riesgo:0.63 (IC95 0.58-0.69)"
+          ]
+        ]
+      },
+      "version": 1,
+      "vigente": true,
+      "historial": [
+        {
+          "momento": "2026-10-28",
+          "evento": "atestiguado",
+          "detalle": "de GRIS/0.0 a VERDE/0.85",
+          "version": 1,
+          "veredicto": "VERDE",
+          "confianza": 0.85,
+          "magnitud": "razon_riesgo:0.63 (IC95 0.58-0.69)",
+          "huella": "c1a90daa023c6baf9c812a2e"
+        }
+      ],
+      "revisar_si": [
+        "aparece un ensayo de fase 3 nuevo en esta poblacion",
+        "el articulo anclado se retracta",
+        "cambia la version del articulo en el bucket de PMC"
+      ],
+      "firmado_por": "",
+      "reemplaza": "",
+      "id": "Hbfe41a733acacae1",
+      "techo": "VERDE",
+      "mostrable": true,
+      "motivo_no_mostrable": "",
+      "huella": "c1a90daa023c6baf9c812a2e"
+    },
+    {
+      "enunciado": "En personas con enfermedad renal diabetica, agregar un inhibidor de SGLT2 se asocia con menor riesgo del desenlace renal compuesto frente a placebo, segun el metaanalisis anclado.",
+      "clase": "efecto",
+      "poblacion": {
+        "condicion": "enfermedad renal diabetica",
+        "edad_min": 18,
+        "edad_max": null,
+        "inclusion": [
+          "diabetes",
+          "enfermedad renal cronica"
+        ],
+        "exclusion": [],
+        "nivel_atencion": "segundo nivel",
+        "pais_contexto": "internacional"
+      },
+      "magnitud": {
+        "clase": "razon_riesgo",
+        "valor": 0.66,
+        "unidad": null,
+        "ic_inf": 0.58,
+        "ic_sup": 0.75,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "SGLT2i were associated with a 34% reduction in the risk of a kidney composite outcome (HR 0.66, 95% CI 0.58–0.75, I2 = 0.0%, P for heterogeneity = 0.949, n = 21,195, Fig. 1)."
+      },
+      "magnitud_en_cuarentena": null,
+      "intervencion": "inhibicion de SGLT2",
+      "comparador_clinico": "placebo sobre tratamiento de base",
+      "desenlace": "desenlace renal compuesto",
+      "anclas": [
+        {
+          "tipo": "articulo_cc_by",
+          "localizador": "PMC9491404.1",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9491404/",
+          "magnitud": {
+            "clase": "razon_riesgo",
+            "valor": 0.66,
+            "unidad": null,
+            "ic_inf": 0.58,
+            "ic_sup": 0.75,
+            "comparador": "=",
+            "valor_sup": null,
+            "analito": null,
+            "por_dia": null,
+            "etiqueta": null,
+            "bruto": "SGLT2i were associated with a 34% reduction in the risk of a kidney composite outcome (HR 0.66, 95% CI 0.58–0.75, I2 = 0.0%, P for heterogeneity = 0.949, n = 21,195, Fig. 1)."
+          },
+          "cita_corta": "SGLT2i were associated with a 34% reduction in the risk of a kidney composite outcome (HR 0.66, 95% CI 0.58–0.75,...",
+          "fecha_consulta": "",
+          "licencia": "CC BY (PMC OA)",
+          "verificada": true
+        }
+      ],
+      "mecanismo": [
+        "menor reabsorcion proximal de sodio",
+        "mas sodio en la macula densa",
+        "restauracion de la retroalimentacion tubuloglomerular",
+        "vasoconstriccion de la arteriola aferente",
+        "menor presion intraglomerular",
+        "menor hiperfiltracion glomerular"
+      ],
+      "delta_mexico": "PENDIENTE DE VERIFICAR: clave y disponibilidad en el Compendio Nacional de Insumos para la Salud, y si esta disponible en primer nivel o solo en segundo.",
+      "trampa_enarm": "Se confunde la caida inicial y reversible del filtrado glomerular, que es el efecto hemodinamico esperado, con dano renal, y se suspende el farmaco justo cuando esta funcionando.",
+      "veredicto": "VERDE",
+      "confianza": 0.85,
+      "diagnostico": {
+        "justificacion": {
+          "origen": "epidemiologia_mx",
+          "evidencia": "la diabetes y la enfermedad renal cronica estan entre las primeras causas de mortalidad y de gasto en salud en Mexico",
+          "peso": 0.95
+        },
+        "anclaje": [
+          {
+            "localizador": "PMC9491404.1",
+            "verificada": true,
+            "coincide": "identico",
+            "ruta": "PMC9491404.1.txt offset 16920",
+            "motivo": "coincide (identico) en PMC9491404.1.txt offset 16920. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros"
+          }
+        ],
+        "veredicto": "VERDE",
+        "confianza": 0.85,
+        "magnitud_consenso": {
+          "clase": "razon_riesgo",
+          "valor": 0.66,
+          "unidad": null,
+          "ic_inf": 0.58,
+          "ic_sup": 0.75,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "SGLT2i were associated with a 34% reduction in the risk of a kidney composite outcome (HR 0.66, 95% CI 0.58–0.75, I2 = 0.0%, P for heterogeneity = 0.949, n = 21,195, Fig. 1)."
+        },
+        "n_elicitaciones": 1,
+        "n_encuadres": 1,
+        "cuota_consenso": 1.0,
+        "tasa_abstencion": 0.0,
+        "anclas_verificadas": 1,
+        "ancla_mas_fuerte": "articulo_cc_by",
+        "motivos": [
+          "la cifra se extrajo del documento anclado y coincide byte a byte con el (articulo_cc_by:PMC9491404.1). Esa es la procedencia mas fuerte posible y no necesita triangulacion. Lo que si queda pendiente es una segunda lectura que confirme que se tomo el dato correcto del documento y no un subgrupo"
+        ],
+        "alertas": [
+          "EXTRACCION_SIN_SEGUNDA_LECTURA"
+        ],
+        "grupos": [
+          [
+            "razon_riesgo:0.66 (IC95 0.58-0.75)"
+          ]
+        ]
+      },
+      "version": 1,
+      "vigente": true,
+      "historial": [
+        {
+          "momento": "2026-10-28",
+          "evento": "atestiguado",
+          "detalle": "de GRIS/0.0 a VERDE/0.85",
+          "version": 1,
+          "veredicto": "VERDE",
+          "confianza": 0.85,
+          "magnitud": "razon_riesgo:0.66 (IC95 0.58-0.75)",
+          "huella": "c3d401fe282da8a4154cbb66"
+        }
+      ],
+      "revisar_si": [
+        "aparece un ensayo de fase 3 nuevo en esta poblacion",
+        "el articulo anclado se retracta",
+        "cambia la version del articulo en el bucket de PMC"
+      ],
+      "firmado_por": "",
+      "reemplaza": "",
+      "id": "H400a4e2b76a7d591",
+      "techo": "VERDE",
+      "mostrable": true,
+      "motivo_no_mostrable": "",
+      "huella": "c3d401fe282da8a4154cbb66"
+    },
+    {
+      "enunciado": "El beneficio renal de un inhibidor de SGLT2 se mantiene en el subgrupo con filtrado glomerular estimado por debajo de 60, segun el metaanalisis anclado.",
+      "clase": "efecto",
+      "poblacion": {
+        "condicion": "enfermedad renal cronica con filtrado estimado reducido",
+        "edad_min": 18,
+        "edad_max": null,
+        "inclusion": [
+          "filtrado glomerular estimado por debajo de 60"
+        ],
+        "exclusion": [],
+        "nivel_atencion": "segundo nivel",
+        "pais_contexto": "internacional"
+      },
+      "magnitud": {
+        "clase": "razon_riesgo",
+        "valor": 0.7,
+        "unidad": null,
+        "ic_inf": 0.58,
+        "ic_sup": 0.83,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "SGLT2 inhibitors reduced the risk of the primary renal outcome by 30% in patients with eGFR<60 mL/min/1.73 m2 (HR 0.70, [95% CI 0.58–0.83], I2 = 0.00%) and by 43% in patients with UACR > 300 mg/g (HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+      },
+      "magnitud_en_cuarentena": null,
+      "intervencion": "inhibicion de SGLT2",
+      "comparador_clinico": "placebo",
+      "desenlace": "desenlace renal primario con filtrado reducido",
+      "anclas": [
+        {
+          "tipo": "articulo_cc_by",
+          "localizador": "PMC8591237.1",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8591237/",
+          "magnitud": {
+            "clase": "razon_riesgo",
+            "valor": 0.7,
+            "unidad": null,
+            "ic_inf": 0.58,
+            "ic_sup": 0.83,
+            "comparador": "=",
+            "valor_sup": null,
+            "analito": null,
+            "por_dia": null,
+            "etiqueta": null,
+            "bruto": "SGLT2 inhibitors reduced the risk of the primary renal outcome by 30% in patients with eGFR<60 mL/min/1.73 m2 (HR 0.70, [95% CI 0.58–0.83], I2 = 0.00%) and by 43% in patients with UACR > 300 mg/g (HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+          },
+          "cita_corta": "SGLT2 inhibitors reduced the risk of the primary renal outcome by 30% in patients with eGFR<60 mL/min/1.73 m2 (HR 0.70,...",
+          "fecha_consulta": "",
+          "licencia": "CC BY (PMC OA)",
+          "verificada": true
+        }
+      ],
+      "mecanismo": [
+        "menor presion intraglomerular",
+        "menor hiperfiltracion en las nefronas remanentes"
+      ],
+      "delta_mexico": "PENDIENTE DE VERIFICAR.",
+      "trampa_enarm": "Se asume que a menor filtrado el beneficio desaparece, cuando lo que cambia es el beneficio absoluto y no necesariamente el relativo.",
+      "veredicto": "VERDE",
+      "confianza": 0.85,
+      "diagnostico": {
+        "justificacion": {
+          "origen": "primer_nivel",
+          "evidencia": "el filtrado reducido es el escenario donde mas dudas hay sobre si conviene iniciar o suspender, y es donde el primer nivel refiere",
+          "peso": 0.85
+        },
+        "anclaje": [
+          {
+            "localizador": "PMC8591237.1",
+            "verificada": true,
+            "coincide": "identico",
+            "ruta": "PMC8591237.1.txt offset 3406",
+            "motivo": "coincide (identico) en PMC8591237.1.txt offset 3406. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros"
+          }
+        ],
+        "veredicto": "VERDE",
+        "confianza": 0.85,
+        "magnitud_consenso": {
+          "clase": "razon_riesgo",
+          "valor": 0.7,
+          "unidad": null,
+          "ic_inf": 0.58,
+          "ic_sup": 0.83,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "SGLT2 inhibitors reduced the risk of the primary renal outcome by 30% in patients with eGFR<60 mL/min/1.73 m2 (HR 0.70, [95% CI 0.58–0.83], I2 = 0.00%) and by 43% in patients with UACR > 300 mg/g (HR 0.57, [95% CI 0.48–0.67], I2 = 16.59%)."
+        },
+        "n_elicitaciones": 1,
+        "n_encuadres": 1,
+        "cuota_consenso": 1.0,
+        "tasa_abstencion": 0.0,
+        "anclas_verificadas": 1,
+        "ancla_mas_fuerte": "articulo_cc_by",
+        "motivos": [
+          "la cifra se extrajo del documento anclado y coincide byte a byte con el (articulo_cc_by:PMC8591237.1). Esa es la procedencia mas fuerte posible y no necesita triangulacion. Lo que si queda pendiente es una segunda lectura que confirme que se tomo el dato correcto del documento y no un subgrupo"
+        ],
+        "alertas": [
+          "EXTRACCION_SIN_SEGUNDA_LECTURA"
+        ],
+        "grupos": [
+          [
+            "razon_riesgo:0.7 (IC95 0.58-0.83)"
+          ]
+        ]
+      },
+      "version": 1,
+      "vigente": true,
+      "historial": [
+        {
+          "momento": "2026-10-28",
+          "evento": "atestiguado",
+          "detalle": "de GRIS/0.0 a VERDE/0.85",
+          "version": 1,
+          "veredicto": "VERDE",
+          "confianza": 0.85,
+          "magnitud": "razon_riesgo:0.7 (IC95 0.58-0.83)",
+          "huella": "ccb51881fad10f539c3a960d"
+        }
+      ],
+      "revisar_si": [
+        "aparece un ensayo de fase 3 nuevo en esta poblacion",
+        "el articulo anclado se retracta",
+        "cambia la version del articulo en el bucket de PMC"
+      ],
+      "firmado_por": "",
+      "reemplaza": "",
+      "id": "H271eeaaba89ba33e",
+      "techo": "VERDE",
+      "mostrable": true,
+      "motivo_no_mostrable": "",
+      "huella": "ccb51881fad10f539c3a960d"
+    },
+    {
+      "enunciado": "En la misma poblacion con enfermedad renal diabetica, el metaanalisis anclado reporta menor mortalidad por cualquier causa con un inhibidor de SGLT2 frente a placebo.",
+      "clase": "efecto",
+      "poblacion": {
+        "condicion": "enfermedad renal diabetica",
+        "edad_min": 18,
+        "edad_max": null,
+        "inclusion": [
+          "diabetes",
+          "enfermedad renal cronica"
+        ],
+        "exclusion": [],
+        "nivel_atencion": "segundo nivel",
+        "pais_contexto": "internacional"
+      },
+      "magnitud": {
+        "clase": "razon_riesgo",
+        "valor": 0.86,
+        "unidad": null,
+        "ic_inf": 0.77,
+        "ic_sup": 0.96,
+        "comparador": "=",
+        "valor_sup": null,
+        "analito": null,
+        "por_dia": null,
+        "etiqueta": null,
+        "bruto": "S2), as well as all-cause mortality (HR 0.86, 95% CI 0.77–0.96, I2 = 14.5%, P for heterogeneity = 0.322, n = 21,406).Table 1 Effect of SGLT2 inhibitors on clinical outcomes in adults with diabetic kidney disease\n\nOutcome\tNo. studies\tNo. events\tSample size\tHR (95% CI)\tI2, %\tPHeterogeneity\tPEgger test\t\nMACE\t6\t2271\t21,913\t0.83 (0.75–0.93)\t33.8\t0.183\t0.287\t\nKidney composite\t5\t1197\t21,195\t0.66 (0.58–0.75)\t0.0\t0.949\t0.513\t\nHHF\t6\t1219\t22,346\t0.62 (0.55–0.71)\t0.0\t0.844\t0.267\t\nCardiovascular death\t5\t953\t20,539\t0.84 (0.74–0.96)\t0.0\t0.639\t0.996\t\nFatal and nonfatal MI\t5\t498*\t20,108\t0.78 (0.67–0.92)\t7.7\t0.363\t0.671\t\nFatal and nonfatal stroke\t5\t332*\t20,108\t0.76 (0.59–0.97)\t41.3\t0.146\t0.564\t\nAll-cause mortality\t5\t1451\t21,406\t0.86 (0.77–0.96)\t14.5\t0.322\t0.268\t\n*The number of MI events and stroke cases from the SCORED trial were not reported in the primary trials and are not included in the table."
+      },
+      "magnitud_en_cuarentena": null,
+      "intervencion": "inhibicion de SGLT2",
+      "comparador_clinico": "placebo sobre tratamiento de base",
+      "desenlace": "mortalidad por cualquier causa",
+      "anclas": [
+        {
+          "tipo": "articulo_cc_by",
+          "localizador": "PMC9491404.1",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9491404/",
+          "magnitud": {
+            "clase": "razon_riesgo",
+            "valor": 0.86,
+            "unidad": null,
+            "ic_inf": 0.77,
+            "ic_sup": 0.96,
+            "comparador": "=",
+            "valor_sup": null,
+            "analito": null,
+            "por_dia": null,
+            "etiqueta": null,
+            "bruto": "S2), as well as all-cause mortality (HR 0.86, 95% CI 0.77–0.96, I2 = 14.5%, P for heterogeneity = 0.322, n = 21,406).Table 1 Effect of SGLT2 inhibitors on clinical outcomes in adults with diabetic kidney disease\n\nOutcome\tNo. studies\tNo. events\tSample size\tHR (95% CI)\tI2, %\tPHeterogeneity\tPEgger test\t\nMACE\t6\t2271\t21,913\t0.83 (0.75–0.93)\t33.8\t0.183\t0.287\t\nKidney composite\t5\t1197\t21,195\t0.66 (0.58–0.75)\t0.0\t0.949\t0.513\t\nHHF\t6\t1219\t22,346\t0.62 (0.55–0.71)\t0.0\t0.844\t0.267\t\nCardiovascular death\t5\t953\t20,539\t0.84 (0.74–0.96)\t0.0\t0.639\t0.996\t\nFatal and nonfatal MI\t5\t498*\t20,108\t0.78 (0.67–0.92)\t7.7\t0.363\t0.671\t\nFatal and nonfatal stroke\t5\t332*\t20,108\t0.76 (0.59–0.97)\t41.3\t0.146\t0.564\t\nAll-cause mortality\t5\t1451\t21,406\t0.86 (0.77–0.96)\t14.5\t0.322\t0.268\t\n*The number of MI events and stroke cases from the SCORED trial were not reported in the primary trials and are not included in the table."
+          },
+          "cita_corta": "S2), as well as all-cause mortality (HR 0.86, 95% CI 0.77–0.96, I2 = 14.5%, P for heterogeneity = 0.322, n...",
+          "fecha_consulta": "",
+          "licencia": "CC BY (PMC OA)",
+          "verificada": true
+        }
+      ],
+      "mecanismo": [
+        "menor hiperfiltracion glomerular",
+        "menor progresion de la enfermedad renal",
+        "menor carga cardiovascular asociada a la uremia"
+      ],
+      "delta_mexico": "PENDIENTE DE VERIFICAR.",
+      "trampa_enarm": "Se cita la reduccion de mortalidad como si fuera del mismo tamano que la del desenlace renal; el intervalo de confianza de la mortalidad es mas ancho y roza la unidad.",
+      "veredicto": "VERDE",
+      "confianza": 0.85,
+      "diagnostico": {
+        "justificacion": {
+          "origen": "perfil_enarm",
+          "evidencia": "un desenlace duro de mortalidad es de los que mas se preguntan y de los que mas pesan al comparar intervenciones",
+          "peso": 0.8
+        },
+        "anclaje": [
+          {
+            "localizador": "PMC9491404.1",
+            "verificada": true,
+            "coincide": "identico",
+            "ruta": "PMC9491404.1.txt offset 14414",
+            "motivo": "coincide (identico) en PMC9491404.1.txt offset 14414. Advertencias de licencia: la licencia CC BY cubre la obra del autor, NO necesariamente las figuras, tablas o escalas que esa obra reproduzca de terceros"
+          }
+        ],
+        "veredicto": "VERDE",
+        "confianza": 0.85,
+        "magnitud_consenso": {
+          "clase": "razon_riesgo",
+          "valor": 0.86,
+          "unidad": null,
+          "ic_inf": 0.77,
+          "ic_sup": 0.96,
+          "comparador": "=",
+          "valor_sup": null,
+          "analito": null,
+          "por_dia": null,
+          "etiqueta": null,
+          "bruto": "S2), as well as all-cause mortality (HR 0.86, 95% CI 0.77–0.96, I2 = 14.5%, P for heterogeneity = 0.322, n = 21,406).Table 1 Effect of SGLT2 inhibitors on clinical outcomes in adults with diabetic kidney disease\n\nOutcome\tNo. studies\tNo. events\tSample size\tHR (95% CI)\tI2, %\tPHeterogeneity\tPEgger test\t\nMACE\t6\t2271\t21,913\t0.83 (0.75–0.93)\t33.8\t0.183\t0.287\t\nKidney composite\t5\t1197\t21,195\t0.66 (0.58–0.75)\t0.0\t0.949\t0.513\t\nHHF\t6\t1219\t22,346\t0.62 (0.55–0.71)\t0.0\t0.844\t0.267\t\nCardiovascular death\t5\t953\t20,539\t0.84 (0.74–0.96)\t0.0\t0.639\t0.996\t\nFatal and nonfatal MI\t5\t498*\t20,108\t0.78 (0.67–0.92)\t7.7\t0.363\t0.671\t\nFatal and nonfatal stroke\t5\t332*\t20,108\t0.76 (0.59–0.97)\t41.3\t0.146\t0.564\t\nAll-cause mortality\t5\t1451\t21,406\t0.86 (0.77–0.96)\t14.5\t0.322\t0.268\t\n*The number of MI events and stroke cases from the SCORED trial were not reported in the primary trials and are not included in the table."
+        },
+        "n_elicitaciones": 1,
+        "n_encuadres": 1,
+        "cuota_consenso": 1.0,
+        "tasa_abstencion": 0.0,
+        "anclas_verificadas": 1,
+        "ancla_mas_fuerte": "articulo_cc_by",
+        "motivos": [
+          "la cifra se extrajo del documento anclado y coincide byte a byte con el (articulo_cc_by:PMC9491404.1). Esa es la procedencia mas fuerte posible y no necesita triangulacion. Lo que si queda pendiente es una segunda lectura que confirme que se tomo el dato correcto del documento y no un subgrupo"
+        ],
+        "alertas": [
+          "EXTRACCION_SIN_SEGUNDA_LECTURA"
+        ],
+        "grupos": [
+          [
+            "razon_riesgo:0.86 (IC95 0.77-0.96)"
+          ]
+        ]
+      },
+      "version": 1,
+      "vigente": true,
+      "historial": [
+        {
+          "momento": "2026-10-28",
+          "evento": "atestiguado",
+          "detalle": "de GRIS/0.0 a VERDE/0.85",
+          "version": 1,
+          "veredicto": "VERDE",
+          "confianza": 0.85,
+          "magnitud": "razon_riesgo:0.86 (IC95 0.77-0.96)",
+          "huella": "b8bfa2492f31f32181832cff"
+        }
+      ],
+      "revisar_si": [
+        "aparece un ensayo de fase 3 nuevo en esta poblacion",
+        "el articulo anclado se retracta",
+        "cambia la version del articulo en el bucket de PMC"
+      ],
+      "firmado_por": "",
+      "reemplaza": "",
+      "id": "H5808a6c22055a1ea",
+      "techo": "VERDE",
+      "mostrable": true,
+      "motivo_no_mostrable": "",
+      "huella": "b8bfa2492f31f32181832cff"
+    }
+  ],
+  "cola_de_revision": [
+    {
+      "id": "H07264fc7d4767860",
+      "veredicto": "GRIS",
+      "enunciado": "Caso de control: este articulo no tiene licencia usable.",
+      "alertas": [],
+      "motivos": [
+        "solo 0 elicitacion(es) utiles y ninguna ancla verificada (minimo 3)"
+      ]
+    }
+  ]
+}

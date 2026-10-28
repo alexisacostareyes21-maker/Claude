@@ -360,6 +360,58 @@ def atestiguar(
             )
             return rep(Veredicto.ROJO, 0.0)
 
+    # ---- Regla 5f: extraccion directa de la fuente.
+    #
+    # Hay DOS modos de anclaje y el motor solo modelaba uno.
+    #
+    #   Recordar y verificar: el modelo produce el numero y el ancla lo confirma.
+    #   Ahi la diversidad de encuadre es imprescindible, porque lo que se mide es
+    #   si el recuerdo es fiable.
+    #
+    #   Extraer de la fuente: el numero viene DEL documento, leido directo y
+    #   verificado byte a byte. El ancla no confirma un recuerdo, ES la
+    #   procedencia. No hay nada que confabular, asi que exigir tres encuadres
+    #   distintos no agrega informacion: castiga la via mas fiable por no
+    #   parecerse a la menos fiable.
+    #
+    # Queda un riesgo residual, pero es de OTRO tipo: la extraccion puede haber
+    # tomado el numero equivocado del documento, por ejemplo un subgrupo en vez
+    # del desenlace primario. Eso no es confabulacion sino mala seleccion, y no
+    # lo arregla la diversidad de encuadre: lo arregla una segunda lectura. Por
+    # eso el hecho llega a VERDE por fidelidad a la fuente y a la vez se marca
+    # para revision, que es lo honesto.
+    extraccion_directa = [
+        e for e in validas
+        if e.encuadre is Encuadre.DESDE_FUENTE and any(
+            comparar(a.magnitud, e.magnitud, tol) is Acuerdo.IDENTICO for a in anclas_ver
+        )
+    ]
+    if extraccion_directa and anclas_confirman:
+        # Las advertencias de triangulacion no aplican a este modo y dejarlas
+        # puestas seria enganoso: dirian que falta algo que aqui no hace falta.
+        for muerta in ("ENCUADRE_UNICO", "SOLO_INFERENCIA", "ABSTENCION_ALTA"):
+            if muerta in alertas:
+                alertas.remove(muerta)
+        motivos[:] = [m for m in motivos
+                      if "encuadre(s) distinto(s)" not in m and "se abstuvo en" not in m]
+        alertas.append("EXTRACCION_SIN_SEGUNDA_LECTURA")
+        motivos.append(
+            f"la cifra se extrajo del documento anclado y coincide byte a byte con el "
+            f"({anclas_confirman[0].tipo.value}:{anclas_confirman[0].localizador}). Esa es "
+            f"la procedencia mas fuerte posible y no necesita triangulacion. Lo que si "
+            f"queda pendiente es una segunda lectura que confirme que se tomo el dato "
+            f"correcto del documento y no un subgrupo"
+        )
+        # La confianza de una extraccion directa NO depende de cuantos encuadres
+        # ni de cuantas elicitaciones hubo: esos factores miden la calidad de una
+        # triangulacion que aqui no existe ni hace falta. Depende de la fuerza
+        # del ancla y de la precision del dato.
+        techo = hecho.techo()
+        conf_d = _confianza_extraccion(anclas_confirman, consenso)
+        if techo == "VERDE":
+            return rep(Veredicto.VERDE, conf_d)
+        return rep(Veredicto.AMBAR, conf_d * 0.8)
+
     # ---- Regla 6: acreditacion.
     conf = _confianza(cuota, n_enc, len(mags), anclas_ver, consenso)
 
@@ -422,6 +474,34 @@ def _representante(grupo: list[Magnitud]) -> Magnitud:
     return ordenados[len(ordenados) // 2]
 
 
+def _confianza_extraccion(anclas: list, consenso: Optional[Magnitud]) -> float:
+    """Confianza de una cifra leida directo de su fuente y verificada byte a byte.
+
+    Solo dos factores: la fuerza del ancla y la amplitud del intervalo. No entra
+    el numero de encuadres ni el volumen de elicitaciones, porque no hubo
+    triangulacion y no tenia por que haberla.
+    """
+    orden = list(TipoAncla)
+    mejor = min(anclas, key=lambda a: orden.index(a.tipo))
+    f_ancla = {
+        TipoAncla.REGISTRO_ENSAYO: 1.0,
+        TipoAncla.ETIQUETA_REGULADOR: 1.0,
+        TipoAncla.NORMA_OFICIAL: 0.95,
+        TipoAncla.GUIA_GOBIERNO: 0.9,
+        TipoAncla.ARTICULO_CC_BY: 0.85,
+        TipoAncla.ARTICULO_ABSTRACT: 0.6,
+        TipoAncla.DERIVADA: 0.5,
+    }.get(mejor.tipo, 0.3)
+    f_ic = 1.0
+    if consenso is not None and consenso.ic_inf is not None and consenso.ic_sup is not None:
+        if consenso.valor != 0:
+            amplitud = (consenso.ic_sup - consenso.ic_inf) / abs(consenso.valor)
+            f_ic = 1.0 if amplitud < 0.5 else max(0.6, 1.0 - (amplitud - 0.5) / 2)
+    # tope deliberado por debajo de 1: falta la segunda lectura que confirme que
+    # se tomo el dato correcto del documento
+    return round(min(0.9, f_ancla * f_ic), 4)
+
+
 def _confianza(cuota: float, n_enc: int, n: int,
                anclas: list, consenso: Optional[Magnitud]) -> float:
     """Confianza en 0 a 1. Multiplicativa: cada factor puede hundirla.
@@ -469,7 +549,13 @@ def aplicar(hecho: Hecho, elicitaciones: Sequence[Elicitacion],
     r = atestiguar(hecho, elicitaciones, sondas, tol)
     hecho.veredicto = r.veredicto.value
     hecho.confianza = r.confianza
-    hecho.diagnostico = r.dict()
+    # update, NO asignacion. Asignar borraba todo lo demas que vive en el
+    # diagnostico: la justificacion de inclusion, el rastro del anclaje, los
+    # hallazgos de independencia. El sintoma era que los controles reportaban
+    # "hecho sin justificar" sobre hechos que SI la tenian, puesta antes de
+    # atestiguar. Un bug de este tipo no rompe nada visible: solo hace que un
+    # control grite en falso hasta que alguien deja de creerle.
+    hecho.diagnostico.update(r.dict())
     # La cifra de consenso entra al campo principal SOLO si el veredicto la hace
     # exhibible. Antes se escribia siempre, de modo que una cifra en cuarentena
     # quedaba en el catalogo como si fuera el dato del hecho, y lo unico que la

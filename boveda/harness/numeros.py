@@ -114,6 +114,8 @@ _PESO_MOLECULAR = {
 _ALIAS_RAZON = {
     "hr": Clase.RAZON_RIESGO, "hazard ratio": Clase.RAZON_RIESGO, "razon de riesgo": Clase.RAZON_RIESGO,
     "rr": Clase.RAZON_RIESGO, "riesgo relativo": Clase.RAZON_RIESGO, "risk ratio": Clase.RAZON_RIESGO,
+    "relative risk": Clase.RAZON_RIESGO, "rate ratio": Clase.RAZON_RIESGO,
+    "subdistribution hazard ratio": Clase.RAZON_RIESGO,
     "or": Clase.RAZON_RIESGO, "odds ratio": Clase.RAZON_RIESGO, "razon de momios": Clase.RAZON_RIESGO,
     "shr": Clase.RAZON_RIESGO, "sub-hazard ratio": Clase.RAZON_RIESGO,
     "irr": Clase.RAZON_RIESGO, "incidence rate ratio": Clase.RAZON_RIESGO,
@@ -123,6 +125,7 @@ _ALIAS_REDUCCION = {
     "rrr": Clase.REDUCCION_REL, "reduccion del riesgo relativo": Clase.REDUCCION_REL,
     "reduccion relativa": Clase.REDUCCION_REL, "relative risk reduction": Clase.REDUCCION_REL,
     "arr": Clase.REDUCCION_ABS, "reduccion absoluta del riesgo": Clase.REDUCCION_ABS,
+    "absolute risk difference": Clase.REDUCCION_ABS,
     "reduccion absoluta": Clase.REDUCCION_ABS, "diferencia de riesgo": Clase.REDUCCION_ABS,
     "absolute risk reduction": Clase.REDUCCION_ABS, "risk difference": Clase.REDUCCION_ABS,
 }
@@ -215,8 +218,19 @@ def _fmt(v: Optional[float]) -> str:
 # ---------------------------------------------------------------------------
 
 
+# El punto medio como separador decimal (0·63) es el estilo de The Lancet y de
+# varias revistas britanicas. No se puede sustituir a ciegas, porque el mismo
+# caracter se usa como signo de multiplicacion y como vineta: solo cuenta cuando
+# esta ENTRE DIGITOS. Antes de este arreglo, "RR 0·63" se parseaba como 0, es
+# decir corrupcion silenciosa, que es peor que no parsear: el valor real se
+# perdia y quedaba en su lugar un numero plausible y equivocado. Se descubrio
+# corriendo el parser sobre texto real de PMC, no en una prueba sintetica.
+_PUNTO_MEDIO = re.compile("(?<=\\d)[\u00b7\u2022\u2027\u22c5\u2219](?=\\d)")
+
+
 def _norm_texto(s: str) -> str:
     """Minusculas, sin acentos, guiones y simbolos unificados."""
+    s = _PUNTO_MEDIO.sub(".", s or "")
     s = s.replace("–", "-").replace("—", "-").replace("−", "-")
     s = s.replace("≤", "<=").replace("≥", ">=").replace("²", "2")
     s = s.replace("µ", "u").replace("μ", "u")
@@ -258,10 +272,17 @@ def _a_float(tok: str) -> Optional[float]:
 
 
 _NUM = r"[0-9]+(?:[.,][0-9]+)?"
+# Dos ordenes, los dos reales y los dos frecuentes:
+#   "IC 95% 0.51-0.72"  /  "95% CI 0.58-0.75"  /  "95%CI 0.58-0.69"
+# El parentesis es OPCIONAL en ambos. Exigirlo en el segundo orden hacia que
+# "HR 0.66, 95% CI 0.58-0.75" perdiera el intervalo en silencio, y el intervalo
+# es justo lo que sostiene las comparaciones por solape y el peso de confianza.
+_SEP_IC = r"(?:\s*(?:-|a|to|,|hasta)\s*)"
 _RE_IC = re.compile(
-    r"\(?\s*(?:ic|ci)\s*(?:de\s*)?9[05](?:[.,]\d+)?\s*%?\s*[:=,]?\s*"
-    r"(" + _NUM + r")\s*(?:-|a|to|,)\s*(" + _NUM + r")\s*\)?"
-    r"|\(\s*9[05]\s*%\s*(?:ic|ci)\s*[:=,]?\s*(" + _NUM + r")\s*(?:-|a|to|,)\s*(" + _NUM + r")\s*\)",
+    r"\(?\s*(?:ic|ci|intervalo\s+de\s+confianza|confidence\s+interval)\s*(?:del?\s*)?9[05](?:[.,]\d+)?\s*%?\s*"
+    r"[:=,]?\s*(" + _NUM + r")" + _SEP_IC + r"(" + _NUM + r")\s*\)?"
+    r"|\(?\s*9[05](?:[.,]\d+)?\s*%\s*(?:ic|ci|intervalo\s+de\s+confianza|confidence\s+interval|conf\.?\s*int\.?)\s*"
+    r"[:=,]?\s*(" + _NUM + r")" + _SEP_IC + r"(" + _NUM + r")\s*\)?",
     re.I,
 )
 
@@ -342,8 +363,12 @@ def _parsear_bruto(texto: str, clase_sugerida: Optional[Clase] = None,
     for alias, clase in _ALIAS_EFECTO:
         # el conector mas largo va primero: "del" antes de "de", si no "de" consume
         # el prefijo y deja la "l" bloqueando el numero.
+        # Admite una abreviatura entre corchetes o parentesis entre el alias y el
+        # numero, porque asi se escribe de verdad en la literatura:
+        # "relative risk [RR] 0.63", "hazard ratio (HR) 0.61".
         pat = re.compile(
-            r"\b" + re.escape(alias) + r"\b\s*(?:fue de|del|de|en|=|:|was)?\s*(" + _NUM + r")",
+            r"\b" + re.escape(alias) + r"\b\s*(?:\[[^\]]{0,18}\]|\([^)]{0,18}\))?\s*"
+            r"(?:fue de|del|de|en|=|:|was|of)?\s*[:=]?\s*(" + _NUM + r")",
             re.I,
         )
         m = pat.search(t)

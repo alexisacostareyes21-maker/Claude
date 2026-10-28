@@ -200,6 +200,58 @@ def test_no_inventa():
     ok(parsear("") == [], "texto vacio debe devolver lista vacia")
 
 
+# ------------------------------------------- texto real de la literatura
+def test_punto_medio_decimal_del_lancet():
+    """El Lancet y otras revistas britanicas usan punto medio como separador
+    decimal. Antes de arreglarlo, "RR 0\u00b763" se parseaba como 0: corrupcion
+    silenciosa, peor que no parsear, porque el valor real se perdia y quedaba un
+    numero plausible y equivocado en su lugar. Se descubrio corriendo el parser
+    sobre texto real de PMC, no en una prueba sintetica."""
+    m = p1("RR 0\u00b763, 95%CI 0\u00b758-0\u00b769")
+    ok(m is not None and abs(m.valor - 0.63) < 1e-9, f"punto medio decimal: {m}")
+    ok(m and m.ic_inf == 0.58 and m.ic_sup == 0.69, f"IC con punto medio: {m}")
+
+    m2 = p1("RR 1\u00b705 (95% CI 0\u00b795-1\u00b716)")
+    ok(m2 is not None and abs(m2.valor - 1.05) < 1e-9, f"valor mayor que 1: {m2}")
+
+    # pero el punto medio como signo de multiplicacion NO se toca
+    ok(parsear("3 \u00b7 4 = 12") == [] or
+       all(abs(x.valor - 34) > 1e-9 for x in parsear("3 \u00b7 4 = 12")),
+       "el punto medio entre espacios no es un separador decimal")
+
+
+def test_intervalo_en_ingles_sin_parentesis():
+    """"HR 0.66, 95% CI 0.58-0.75" perdia el intervalo en silencio, porque el
+    patron exigia parentesis cuando el porcentaje va antes de la sigla. El
+    intervalo es justo lo que sostiene las comparaciones por solape."""
+    for t in ["HR 0.66, 95% CI 0.58-0.75",
+              "hazard ratio 0.57 (95% CI 0.48-0.67)",
+              "the relative risk was 0.70 (95% confidence interval 0.58 to 0.83)",
+              "HR 0,61 (IC 95% 0,51-0,72)"]:
+        m = p1(t)
+        ok(m is not None and m.ic_inf is not None and m.ic_sup is not None,
+           f"debe capturar el intervalo en: {t!r} -> {m}")
+
+
+def test_alias_en_ingles_y_abreviatura_entre_corchetes():
+    """"relative risk" no estaba en los alias, solo "risk ratio" y "riesgo
+    relativo": la suite estaba sesgada al espanol. Y el corchete de la
+    abreviatura, como en "relative risk [RR] 0.63", bloqueaba el enlace entre el
+    alias y el numero."""
+    casos = [
+        ("relative risk [RR] 0\u00b763, 95% confidence interval 0\u00b758-0\u00b769", 0.63),
+        ("hazard ratio (HR) 0.61 (95% CI 0.51-0.72)", 0.61),
+        ("rate ratio 0.89 (95% CI 0.80-0.99)", 0.89),
+        ("risk ratio [RR] of 0\u00b763", 0.63),
+    ]
+    for t, esperado in casos:
+        m = p1(t)
+        ok(m is not None and abs(m.valor - esperado) < 1e-9,
+           f"{t[:46]!r} debe dar {esperado}: {m}")
+        ok(m is not None and m.clase is Clase.RAZON_RIESGO,
+           f"y clasificarse como razon de riesgo: {m}")
+
+
 def main():
     pruebas = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in pruebas:

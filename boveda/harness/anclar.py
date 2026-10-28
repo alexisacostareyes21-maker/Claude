@@ -61,6 +61,9 @@ from .hecho import Ancla, TipoAncla
 
 CT_BASE = "https://clinicaltrials.gov/api/v2"
 FDA_BASE = "https://api.fda.gov/drug/label.json"
+# PMC Cloud Service en AWS Open Data. Es la ruta VIVA: el servicio FTP y el
+# OA Web Service API (oa.fcgi) se descontinuaron en agosto de 2026.
+PMC_BASE = "https://pmc-oa-opendata.s3.amazonaws.com"
 
 # Campos de la etiqueta FDA donde viven las cifras, por tipo de hecho buscado.
 CAMPOS_ETIQUETA = {
@@ -111,6 +114,8 @@ class Fetcher(Protocol):
 
     def get(self, url: str) -> dict: ...
 
+    def get_text(self, url: str) -> str: ...
+
 
 @dataclass
 class FetcherHTTP:
@@ -155,6 +160,31 @@ class FetcherHTTP:
                 json.dump(datos, f, ensure_ascii=False)
         return datos
 
+    def get_text(self, url: str) -> str:
+        """Igual que get() pero para documentos de texto, como el .txt de PMC."""
+        if self.cache_dir:
+            ruta = os.path.join(self.cache_dir, _nombre_cache(url) + ".txt")
+            if os.path.exists(ruta):
+                with open(ruta, encoding="utf-8") as f:
+                    return f.read()
+        req = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
+        try:
+            kw = {"timeout": self.timeout}
+            if self.cafile:
+                kw["cafile"] = self.cafile
+            with urllib.request.urlopen(req, **kw) as r:
+                texto = r.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            raise AnclajeImposible(f"HTTP {e.code} al traer {url}") from e
+        except urllib.error.URLError as e:
+            raise AnclajeImposible(f"no se pudo alcanzar {url}: {e.reason}") from e
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            with open(os.path.join(self.cache_dir, _nombre_cache(url) + ".txt"), "w",
+                      encoding="utf-8") as f:
+                f.write(texto)
+        return texto
+
 
 @dataclass
 class FetcherOffline:
@@ -166,12 +196,19 @@ class FetcherOffline:
     """
 
     documentos: dict
+    textos: Optional[dict] = None
 
     def get(self, url: str) -> dict:
         for clave, doc in self.documentos.items():
             if clave in url:
                 return doc
         raise AnclajeImposible(f"sin documento offline para {url}")
+
+    def get_text(self, url: str) -> str:
+        for clave, txt in (self.textos or {}).items():
+            if clave in url:
+                return txt
+        raise AnclajeImposible(f"sin texto offline para {url}")
 
 
 class AnclajeImposible(Exception):
@@ -473,6 +510,135 @@ def _ancla_etiqueta(generico: str, spl: str, mag: Optional[Magnitud],
     )
 
 
+
+
+# ---------------------------------------------------------------------------
+# Anclaje en articulo de PMC
+# ---------------------------------------------------------------------------
+
+
+def version_pmc(pmcid: str, fetcher: Fetcher) -> Optional[str]:
+    """Descubre la version vigente de un PMCID en el bucket.
+
+    Las claves del bucket son PMCID.version, no PMCID, asi que hay que listar
+    por prefijo. La version importa: la licencia se declara POR VERSION, y un
+    articulo puede cambiar de licencia entre versiones.
+    """
+    url = f"{PMC_BASE}/?list-type=2&prefix={pmcid}.&max-keys=8"
+    try:
+        xml = fetcher.get_text(url)
+    except AnclajeImposible:
+        return None
+    m = re.findall(re.escape(pmcid) + r"\.(\d+)/", xml or "")
+    if not m:
+        return None
+    return f"{pmcid}.{max(int(v) for v in m)}"
+
+
+def anclar_en_articulo(pmcid: str, magnitud: Magnitud, fetcher: Fetcher,
+                       pista: str = "", tol: float = 0.02,
+                       max_candidatos: int = 60) -> ResultadoAnclaje:
+    """Busca la magnitud en el texto de un articulo de PMC.
+
+    Dos cosas que lo distinguen del anclaje en un registro de ensayo:
+
+    1. LA LICENCIA SE VERIFICA ANTES DE LEER EL CONTENIDO. Si la compuerta de
+       harness.fuentes rechaza el articulo, esta funcion no lo abre y no ancla
+       nada. Un ancla en un articulo que ORIONS no puede usar es peor que no
+       tener ancla: parece trazabilidad y es una infraccion con nombre propio.
+
+    2. NO HAY CAMPOS TIPADOS. El JATS de PMC da estructura DOCUMENTAL, no de
+       datos: no existe paramType ni ciLowerLimit. Toda cifra vive como prosa,
+       asi que el anclaje depende por completo del parseo de magnitudes, y la
+       `pista` (una palabra del desenlace buscado) es lo unico que evita
+       confundir el dato primario con uno de un subgrupo.
+    """
+    from .fuentes import admisible_pmc
+
+    ver = pmcid if re.fullmatch(r"PMC\d+\.\d+", pmcid or "") else None
+    if ver is None:
+        if not re.fullmatch(r"PMC\d+", pmcid or ""):
+            return ResultadoAnclaje(
+                ancla=_ancla_articulo(pmcid, "", magnitud, False), coincide=None,
+                motivo=f"'{pmcid}' no tiene la forma de un PMCID")
+        ver = version_pmc(pmcid, fetcher)
+        if ver is None:
+            return ResultadoAnclaje(
+                ancla=_ancla_articulo(pmcid, "", magnitud, False), coincide=None,
+                motivo=f"{pmcid} no se encontro en el bucket de PMC")
+
+    # ---- compuerta de licencia, ANTES de tocar el contenido
+    try:
+        meta = fetcher.get(f"{PMC_BASE}/{ver}/{ver}.json")
+    except AnclajeImposible as e:
+        return ResultadoAnclaje(ancla=_ancla_articulo(pmcid, ver, magnitud, False),
+                                coincide=None, motivo=str(e))
+    dictamen = admisible_pmc(meta)
+    if not dictamen:
+        return ResultadoAnclaje(
+            ancla=_ancla_articulo(pmcid, ver, magnitud, False), coincide=None,
+            motivo=(f"la compuerta de licencias rechaza {ver}: {dictamen.motivo}. "
+                    f"No se leyo el contenido"))
+
+    try:
+        texto = fetcher.get_text(f"{PMC_BASE}/{ver}/{ver}.txt")
+    except AnclajeImposible as e:
+        return ResultadoAnclaje(ancla=_ancla_articulo(pmcid, ver, magnitud, False),
+                                coincide=None, motivo=str(e))
+
+    clave = (pista or "").lower().strip()
+    candidatos: list[dict] = []
+    halladas: list[tuple] = []
+    for frase, inicio, _sec in _oraciones(texto):
+        if clave and clave not in frase.lower():
+            continue
+        for cand in parsear(frase, clase_sugerida=magnitud.clase):
+            if len(candidatos) < max_candidatos:
+                candidatos.append({"offset": inicio, "magnitud": str(cand),
+                                   "frase": _recorte(frase, 28)})
+            ac = comparar(cand, magnitud, tol)
+            if ac in (Acuerdo.IDENTICO, Acuerdo.EQUIVALENTE):
+                a = _ancla_articulo(pmcid, ver, cand, True)
+                a.cita_corta = _recorte(frase, 20)
+                a.licencia = f"{meta.get('license_code')} (PMC OA)"
+                ruta = f"{ver}.txt offset {inicio}"
+                return ResultadoAnclaje(
+                    ancla=a, coincide=ac, ruta=ruta, encontrado=cand,
+                    candidatos=candidatos,
+                    motivo=(f"coincide ({ac.value}) en {ruta}"
+                            + (f". Advertencias de licencia: "
+                               f"{'; '.join(dictamen.advertencias)}"
+                               if dictamen.advertencias else "")))
+            if cand.clase is magnitud.clase:
+                halladas.append((cand, inicio, frase))
+
+    if halladas:
+        from .numeros import agrupar as _agrupar
+        grupos = _agrupar([c for c, _, _ in halladas])
+        return ResultadoAnclaje(
+            ancla=_ancla_articulo(pmcid, ver, magnitud, False), coincide=None,
+            candidatos=candidatos, encontrado=halladas[0][0],
+            motivo=(f"el articulo trae {len(halladas)} magnitudes de clase "
+                    f"{magnitud.clase.value} en {len(grupos)} grupos y ninguna coincide "
+                    f"con {magnitud}. En un articulo eso es lo esperable sin una pista: "
+                    f"el texto mezcla el desenlace primario con subgrupos y sensibilidad"))
+    return ResultadoAnclaje(
+        ancla=_ancla_articulo(pmcid, ver, magnitud, False), coincide=None,
+        candidatos=candidatos,
+        motivo=(f"no se parseo ninguna magnitud de clase {magnitud.clase.value}"
+                + (f" en frases que contengan '{pista}'" if pista else "")))
+
+
+def _ancla_articulo(pmcid: str, ver: str, mag: Optional[Magnitud],
+                    verificada: bool) -> Ancla:
+    return Ancla(
+        tipo=TipoAncla.ARTICULO_CC_BY,
+        localizador=ver or pmcid,
+        url=f"https://pmc.ncbi.nlm.nih.gov/articles/{pmcid.split('.')[0]}/",
+        magnitud=mag, licencia="", verificada=verificada,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Utilidades
 # ---------------------------------------------------------------------------
@@ -598,4 +764,5 @@ __all__ = [
     "ResultadoAnclaje", "anclar_en_ensayo", "anclar_en_etiqueta",
     "necesita_refresco", "aplicar_anclaje", "CAMPOS_ETIQUETA", "PARAM_A_CLASE",
     "SUBSECCIONES_ESPERADAS", "seccion_admisible",
+    "anclar_en_articulo", "version_pmc", "PMC_BASE",
 ]

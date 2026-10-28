@@ -2,9 +2,33 @@
 
 Núcleo de conocimiento clínico atestiguado, construible sin licenciar guías.
 
-**Estado:** el harness está implementado y probado — **577 aserciones, 0 fallos**, y la
-compuerta de licencias verificada contra datos reales del bucket público de PMC.
+**Estado:** **649 aserciones, 0 fallos**, y la Bóveda tiene **5 hechos clínicos
+reales** anclados byte a byte contra PMC en vivo, con desplazamiento exacto y
+licencia verificada: `dominios/erc_isglt2.json`. Reproducible con
+`python3 ejemplos/construir_dominio.py`.
 Lo que falta está en [Lo que NO está verificado](#lo-que-no-está-verificado).
+
+### Un hecho real de la Bóveda
+
+```
+enunciado : El beneficio renal es de mayor magnitud en el subgrupo con
+            macroalbuminuria, según el metaanálisis anclado.
+magnitud  : razon_riesgo 0.57  IC95 0.48-0.67
+población : ERC con macroalbuminuria | cociente albúmina/creatinina elevado
+veredicto : VERDE   confianza 0.85   mostrable: sí
+ancla     : articulo_cc_by  PMC8591237.1   licencia CC BY (PMC OA)   verificada
+ruta      : PMC8591237.1.txt offset 17850
+cita      : "The same benefit (Figure 2) occurred in patients with
+             macroalbuminuria (reduced by 43% compared with placebo, HR 0.57…"
+mecanismo : menor estrés mecánico sobre la barrera → menor albuminuria
+            → menor daño tubulointersticial
+trampa    : Se trata la albuminuria solo como marcador pronóstico y se pasa por
+            alto que también predice quién obtiene más beneficio.
+huella    : a880b58e8e1f4f02c1351fab
+```
+
+El sexto hecho del lote **no entró**: su artículo es CC BY-NC-ND y la compuerta
+lo rechazó *antes de leer el contenido*.
 
 ---
 

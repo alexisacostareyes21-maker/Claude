@@ -575,6 +575,27 @@ def test_verde_si_escribe_el_campo_principal():
     ok(h.magnitud_en_cuarentena is None, "y no deja nada en cuarentena")
 
 
+def test_aplicar_no_borra_el_resto_del_diagnostico():
+    """Regresion. aplicar() asignaba el diagnostico en vez de actualizarlo, y se
+    llevaba por delante la justificacion de inclusion, el rastro del anclaje y
+    los hallazgos de independencia. El sintoma era un control gritando en falso
+    sobre hechos que si estaban bien, que es la peor clase de bug: no rompe nada
+    visible, solo hace que alguien deje de creerle al control."""
+    hr = p1("HR 0.61 (95% CI 0.51-0.72)")
+    h = hecho_base(anclas=[ancla_ensayo(hr)])
+    h.diagnostico["justificacion"] = {"origen": "perfil_enarm", "evidencia": "x"}
+    h.diagnostico["anclaje"] = [{"localizador": "NCT03036150", "verificada": True}]
+    aplicar(h, [
+        _elic_ok(Encuadre.DIRECTO),
+        _elic_ok(Encuadre.DESDE_ENSAYO, "HR 0,61"),
+        _elic_ok(Encuadre.COMPLEMENTO, "reduccion del riesgo relativo del 39%"),
+    ])
+    ok("justificacion" in h.diagnostico,
+       f"la justificacion debe sobrevivir a la atestiguacion: {list(h.diagnostico)}")
+    ok("anclaje" in h.diagnostico, "y el rastro del anclaje tambien")
+    ok("veredicto" in h.diagnostico, "y debe haberse agregado el reporte")
+
+
 def main():
     pruebas = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in pruebas:

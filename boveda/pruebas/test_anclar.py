@@ -340,6 +340,87 @@ def test_aplicar_anclaje_es_destructivo():
     ok(h.diagnostico["anclaje"][0]["motivo"], "debe quedar el rastro del intento")
 
 
+# ------------------------------------------- anclaje en articulo de PMC
+# Documento con la forma real del bucket: metadatos en JSON y texto plano aparte.
+ART_META_OK = {"pmcid": "PMC9491404", "version": 1, "license_code": "CC BY",
+               "is_pmc_openaccess": True, "is_retracted": False,
+               "is_historical_ocr": False, "is_manuscript": False}
+ART_META_NC = {"pmcid": "PMC6518930", "version": 1, "license_code": "CC BY-NC-ND",
+               "is_pmc_openaccess": True, "is_retracted": False,
+               "is_historical_ocr": False, "is_manuscript": False}
+ART_META_RETR = {"pmcid": "PMC7777777", "version": 1, "license_code": "CC BY",
+                 "is_pmc_openaccess": True, "is_retracted": True,
+                 "is_historical_ocr": False, "is_manuscript": False}
+ART_TXT = ("RESULTS. SGLT2i were associated with a 34% reduction in the risk of a "
+           "kidney composite outcome (HR 0.66, 95% CI 0.58-0.75). All-cause mortality "
+           "was also lower (HR 0.86, 95% CI 0.77-0.96). In a subgroup analysis the "
+           "effect was larger with macroalbuminuria (HR 0.57, 95% CI 0.48-0.67).")
+
+FART = FetcherOffline(
+    documentos={"PMC9491404.1.json": ART_META_OK, "PMC6518930.1.json": ART_META_NC,
+                "PMC7777777.1.json": ART_META_RETR},
+    textos={"PMC9491404.1.txt": ART_TXT, "PMC6518930.1.txt": ART_TXT,
+            "PMC7777777.1.txt": ART_TXT},
+)
+
+
+def test_ancla_articulo_verifica_y_da_offset():
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("PMC9491404.1", p1("HR 0.66 (95% CI 0.58-0.75)"), FART,
+                           pista="kidney")
+    ok(r.ancla.verificada, f"debe anclar: {r.motivo}")
+    ok("offset" in r.ruta, f"debe dar el desplazamiento exacto: {r.ruta}")
+    ok(r.ancla.tipo is TipoAncla.ARTICULO_CC_BY, f"tipo: {r.ancla.tipo}")
+    ok("CC BY" in r.ancla.licencia, f"debe guardar la licencia real: {r.ancla.licencia}")
+    ok(len(r.ancla.cita_corta.split()) <= 21, f"cita recortada: {r.ancla.cita_corta}")
+    ok("kidney" in r.ancla.cita_corta.lower(),
+       f"la pista debe dirigir a la frase correcta: {r.ancla.cita_corta}")
+
+
+def test_la_pista_distingue_el_subgrupo_del_primario():
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("PMC9491404.1", p1("HR 0.57 (95% CI 0.48-0.67)"), FART,
+                           pista="macroalbuminuria")
+    ok(r.ancla.verificada, f"debe anclar el subgrupo pedido: {r.motivo}")
+    ok("macroalbuminuria" in r.ancla.cita_corta.lower(),
+       f"y venir de la frase del subgrupo: {r.ancla.cita_corta}")
+
+
+def test_licencia_se_revisa_antes_de_leer_el_contenido():
+    """Un ancla en un articulo que ORIONS no puede usar es PEOR que no tener
+    ancla: parece trazabilidad y es una infraccion con nombre propio."""
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("PMC6518930.1", p1("HR 0.66 (95% CI 0.58-0.75)"), FART)
+    ok(not r.ancla.verificada, "CC BY-NC-ND no puede anclar")
+    ok("compuerta de licencias rechaza" in r.motivo, f"motivo: {r.motivo}")
+    ok("No se leyo el contenido" in r.motivo,
+       f"y debe constar que no se abrio el documento: {r.motivo}")
+    ok(not r.candidatos, "no debe haber candidatos: nunca se parseo el texto")
+
+
+def test_retractado_no_ancla_aunque_sea_cc_by():
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("PMC7777777.1", p1("HR 0.66 (95% CI 0.58-0.75)"), FART)
+    ok(not r.ancla.verificada, "un articulo retractado nunca ancla un hecho clinico")
+    ok("retractado" in r.motivo, f"motivo: {r.motivo}")
+
+
+def test_cifra_ausente_reporta_lo_que_si_hay():
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("PMC9491404.1", p1("HR 0.39 (95% CI 0.30-0.50)"), FART)
+    ok(not r.ancla.verificada, "una cifra que no esta no se ancla")
+    ok(r.candidatos, "debe reportar las magnitudes que si hallo, para el revisor")
+    ok("0.66" in str(r.candidatos) or "0.86" in str(r.candidatos),
+       f"los candidatos deben ser los reales del texto: {r.candidatos[:2]}")
+
+
+def test_pmcid_mal_formado():
+    from harness.anclar import anclar_en_articulo
+    r = anclar_en_articulo("9491404", p1("HR 0.66"), FART)
+    ok(not r.ancla.verificada, "un PMCID sin prefijo no se consulta")
+    ok("no tiene la forma" in r.motivo, f"motivo: {r.motivo}")
+
+
 def main():
     for t in [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]:
         try:
